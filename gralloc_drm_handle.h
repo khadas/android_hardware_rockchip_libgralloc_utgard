@@ -28,13 +28,16 @@
 #include <cutils/native_handle.h>
 #include <system/graphics.h>
 #include <hardware/gralloc.h>
-#include "format_chooser.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#if RK_DRM_GRALLOC
+#if 1 //RK_DRM_GRALLOC
+#define NUM_FB_BUFFERS 3
+#define GRALLOC_ARM_UMP_MODULE 0
+#define GRALLOC_ARM_DMA_BUF_MODULE 1
+
 #define GRALLOC_UN_USED(arg)     (arg=arg)
 typedef enum
 {
@@ -52,27 +55,12 @@ typedef enum
 	MALI_DPY_TYPE_HDLCD
 } mali_dpy_type;
 
-
-#if 0
-#if MALI_PRODUCT_ID_T86X != 1 \
-    && MALI_PRODUCT_ID_T76X != 1 \
-    && MALI_PRODUCT_ID_T72X != 1
-#error "we must define MALI_PRODUCT_ID_TXXX for current Mali GPU."
-#endif
-
-/* ??? mali-t860 ??? AFBC. */
-#if MALI_PRODUCT_ID_T86X == 1 && MALI_AFBC_GRALLOC != 1
-#error "we must enable AFBC for mali-t860."
-#endif
-
-#if MALI_PRODUCT_ID_T76X == 1 && MALI_AFBC_GRALLOC != 1
-#error "we must enable AFBC for mali-t760."
-#endif
-
-#if MALI_PRODUCT_ID_T72X == 1 && MALI_AFBC_GRALLOC == 1
-#error "we must NOT enable AFBC for mali-t720."
-#endif
-#endif
+enum
+{
+	PRIV_FLAGS_FRAMEBUFFER = 0x00000001,
+	PRIV_FLAGS_USES_UMP    = 0x00000002,
+	PRIV_FLAGS_USES_ION    = 0x00000004,
+};
 
 #endif
 
@@ -84,34 +72,26 @@ struct gralloc_drm_handle_t {
 	/* file descriptors */
 	int prime_fd;
 
-#if RK_DRM_GRALLOC
-#if MALI_AFBC_GRALLOC == 1
-	int     share_attr_fd;
-#endif
-        mali_dpy_type dpy_type;
+#if 1 //RK_DRM_GRALLOC
 
-        uint64_t   internal_format;
-        int        internalWidth;
-        int        internalHeight;
+       // uint64_t   internal_format;
+       // int        internalWidth;
+       // int        internalHeight;
+        int	   flags;
         int        byte_stride;
         int        size;
         int        ref;
         int        pixel_stride;
-        
 
         union {
                 off_t    offset;
                 uint64_t padding4;
         };
-
-#if MALI_AFBC_GRALLOC == 1
-	// locally mapped shared attribute area
-	union {
-		void*    attr_base;
-		uint64_t padding3;
+	union
+	{
+		void   *cpu_addr;
+		uint64_t padding;
 	};
-#endif
-
 	mali_gralloc_yuv_info yuv_info;
 #endif
 
@@ -133,11 +113,7 @@ struct gralloc_drm_handle_t {
 	int data_owner; /* owner of data (for validation) */
 };
 #define GRALLOC_DRM_HANDLE_MAGIC 0x12345678
-#if MALI_AFBC_GRALLOC == 1
-#define GRALLOC_DRM_HANDLE_NUM_FDS 2
-#else
 #define GRALLOC_DRM_HANDLE_NUM_FDS 1
-#endif
 #define GRALLOC_DRM_HANDLE_NUM_INTS (						\
 	((sizeof(struct gralloc_drm_handle_t) - sizeof(native_handle_t))/sizeof(int))	\
 	 - GRALLOC_DRM_HANDLE_NUM_FDS)

@@ -103,6 +103,7 @@ static int drm_mod_perform(const struct gralloc_module_t *mod, int op, ...)
 				err = -EINVAL;
 		}
 		break;
+#if 0
      case GRALLOC_MODULE_PERFORM_GET_INTERNAL_FORMAT:
         {
             buffer_handle_t hnd = va_arg(args, buffer_handle_t);
@@ -114,6 +115,7 @@ static int drm_mod_perform(const struct gralloc_module_t *mod, int op, ...)
                 err = -EINVAL;
         }
         break;
+#endif
     case GRALLOC_MODULE_PERFORM_GET_HADNLE_WIDTH:
         {
             buffer_handle_t hnd = va_arg(args, buffer_handle_t);
@@ -239,13 +241,13 @@ static int drm_mod_lock(const gralloc_module_t *mod, buffer_handle_t handle,
 	return err;
 }
 
-#define GRALLOC_ALIGN(value, base) (((value) + ((base) - 1)) & ~((base) - 1))
 static int drm_mod_lock_ycbcr(gralloc_module_t const* module,
 				buffer_handle_t handle, int usage,
 				int l, int t, int w, int h, android_ycbcr *ycbcr)
 {
 	struct gralloc_drm_bo_t *bo;
 	int ret = 0;
+	char *cpu_addr;
 
 	GRALLOC_UN_USED(module);
 	GRALLOC_UN_USED(l);
@@ -259,80 +261,62 @@ static int drm_mod_lock_ycbcr(gralloc_module_t const* module,
 
 	struct gralloc_drm_handle_t* hnd = (struct gralloc_drm_handle_t*)handle;
 
-	if (usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK)) {
-		char *cpu_addr;
-		int y_stride = hnd->byte_stride;
-		/* Ensure height is aligned for subsampled chroma
-		 *before calculating buffer parameters
-		 */
-		int adjusted_height = GRALLOC_ALIGN(hnd->height, 2);
-		int y_size =  y_stride * adjusted_height;
+    if (usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK)) {
+        ret = gralloc_drm_bo_lock(bo, hnd->usage,
+                        0, 0, hnd->width, hnd->height,(void **)&cpu_addr);
 
-		int u_offset = 0;
-		int v_offset = 0;
-		int c_stride = 0;
-		int step = 0;
+        // this is currently only used by camera for yuv420sp
+        // if in future other formats are needed, store to private
+        // handle and change the below code based on private format.
 
-		/* Map format if necessary (also removes internal extension bits) */
-		uint64_t mapped_format = map_format(hnd->internal_format);
-
-		int ret = gralloc_drm_bo_lock(bo, hnd->usage,
-				0, 0, hnd->width, hnd->height,(void **)&cpu_addr);
-
-		switch (mapped_format)
-		{
-			case GRALLOC_ARM_HAL_FORMAT_INDEXED_NV12:
-			case HAL_PIXEL_FORMAT_YCrCb_NV12:
-			case HAL_PIXEL_FORMAT_YCbCr_420_888:
-				c_stride = y_stride;
-				/* Y plane, UV plane */
-				u_offset = y_size;
-				v_offset = y_size + 1;
-				step = 2;
-				break;
-
-			case GRALLOC_ARM_HAL_FORMAT_INDEXED_NV21:
-				c_stride = y_stride;
-				/* Y plane, UV plane */
-				v_offset = y_size;
-				u_offset = y_size + 1;
-				step = 2;
-				break;
-
-			case HAL_PIXEL_FORMAT_YV12:
-			case GRALLOC_ARM_HAL_FORMAT_INDEXED_YV12:
-			{
-				int c_size;
-
-				/* Stride alignment set to 16 as the SW access flags
-				 *were set
-				 */
-				c_stride = GRALLOC_ALIGN(hnd->byte_stride / 2, 16);
-				c_size = c_stride * (adjusted_height / 2);
-				/* Y plane, V plane, U plane */
-				v_offset = y_size;
-				u_offset = y_size + c_size;
-				step = 1;
-				break;
-			}
-
-			default:
-				ALOGE("Can't lock buffer %p: wrong format %" PRIu64 "",
-								hnd, hnd->internal_format);
-				ret = -EINVAL;
-				break;
-		}
-
-		if (!ret) {
-			ycbcr->y = cpu_addr;
-			ycbcr->cb = cpu_addr + u_offset;
-			ycbcr->cr = cpu_addr + v_offset;
-			ycbcr->ystride = y_stride;
-			ycbcr->cstride = c_stride;
-			ycbcr->chroma_step = step;
-		}
-	}
-
+        int ystride;
+        switch (hnd->format) {
+        case HAL_PIXEL_FORMAT_YCrCb_420_SP:
+        case HAL_PIXEL_FORMAT_YCbCr_420_888:
+            ystride = hnd->stride;
+            ycbcr->y  = (void*)cpu_addr;
+            ycbcr->cr = (void*)(cpu_addr + ystride * hnd->height);
+            ycbcr->cb = (void*)(cpu_addr + ystride * hnd->height + 1);
+            ycbcr->ystride = ystride;
+            ycbcr->cstride = ystride;
+            ycbcr->chroma_step = 2;
+            memset(ycbcr->reserved, 0, sizeof(ycbcr->reserved));
+            break;
+        case HAL_PIXEL_FORMAT_YCrCb_NV12:
+            ystride = hnd->stride;
+            ycbcr->y  = (void*)cpu_addr;
+            ycbcr->cr = (void*)(cpu_addr + ystride *  hnd->height + 1);
+            ycbcr->cb = (void*)(cpu_addr + ystride *  hnd->height);
+            ycbcr->ystride = ystride;
+            ycbcr->cstride = ystride;
+            ycbcr->chroma_step = 2;
+            memset(ycbcr->reserved, 0, sizeof(ycbcr->reserved));
+            break;
+        case HAL_PIXEL_FORMAT_YV12:
+            ystride = hnd->stride;
+            ycbcr->ystride = ystride;
+            ycbcr->cstride = (ystride/2 + 15) & ~15;
+            ycbcr->y  = (void*)cpu_addr;
+            ycbcr->cr = (void*)(cpu_addr + ystride * hnd->height);
+            ycbcr->cb = (void*)(cpu_addr + ystride * hnd->height + ycbcr->cstride * hnd->height/2);
+            ycbcr->chroma_step = 1;
+            memset(ycbcr->reserved, 0, sizeof(ycbcr->reserved));
+            break;
+        case HAL_PIXEL_FORMAT_YCbCr_422_SP:
+            ystride = hnd->stride;
+            ycbcr->y  = (void*)cpu_addr;
+            ycbcr->cb = (void*)(cpu_addr + ystride * hnd->height);
+            ycbcr->cr = (void*)(cpu_addr + ystride * hnd->height + 1);
+            ycbcr->ystride = ystride;
+            ycbcr->cstride = ystride;
+            ycbcr->chroma_step = 2;
+            memset(ycbcr->reserved, 0, sizeof(ycbcr->reserved));
+            break;
+        default:
+            ALOGE("%s: Invalid format passed: 0x%x", __FUNCTION__, hnd->format);
+            return -EINVAL;
+        }
+    }
 	gralloc_drm_bo_decref(bo);
 	return ret;
 }
@@ -498,8 +482,6 @@ drm_module_t::drm_module_t()
 #if RK_DRM_GRALLOC
     refcount = 0;
 #endif
-
-    initialize_blk_conf();
 }
 
 struct drm_module_t HAL_MODULE_INFO_SYM;

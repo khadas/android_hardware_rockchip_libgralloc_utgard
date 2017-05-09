@@ -256,10 +256,6 @@ static struct gralloc_drm_handle_t *create_bo_handle(int width,
 	handle->prime_fd = -1;
 
 #if RK_DRM_GRALLOC
-#if MALI_AFBC_GRALLOC == 1
-	handle->share_attr_fd = -1;
-	handle->attr_base = MAP_FAILED;
-#endif
 	handle->yuv_info = MALI_YUV_NO_INFO;
 #endif
 	ALOGD_IF(RK_DRM_GRALLOC_DEBUG,"create_bo_handle handle: version=%d, numInts=%d, numFds=%d, magic=%x",
@@ -504,7 +500,7 @@ int gralloc_drm_handle_get_attributes(buffer_handle_t _handle, void *attrs)
 	return ret;
 }
 
-
+#if 0
 int gralloc_drm_handle_get_internal_format(buffer_handle_t _handle, uint64_t *internal_format)
 {
 	int ret = 0;
@@ -523,6 +519,7 @@ int gralloc_drm_handle_get_internal_format(buffer_handle_t _handle, uint64_t *in
     gralloc_drm_unlock_handle(_handle);
 	return ret;
 }
+#endif
 
 int gralloc_drm_handle_get_width(buffer_handle_t _handle, int *width)
 {
