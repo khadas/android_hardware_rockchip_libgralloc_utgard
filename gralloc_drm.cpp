@@ -257,6 +257,7 @@ static struct gralloc_drm_handle_t *create_bo_handle(int width,
 
 #if RK_DRM_GRALLOC
 	handle->yuv_info = MALI_YUV_NO_INFO;
+	handle->phy_addr = 0;
 #endif
 	ALOGD_IF(RK_DRM_GRALLOC_DEBUG,"create_bo_handle handle: version=%d, numInts=%d, numFds=%d, magic=%x",
 		handle->base.version, handle->base.numInts,
@@ -433,6 +434,26 @@ int gralloc_drm_bo_lock(struct gralloc_drm_bo_t *bo,
 	bo->locked_for |= usage;
 
 	return 0;
+}
+
+int gralloc_drm_handle_get_phy_addr(buffer_handle_t _handle, uint32_t *phy_addr)
+{
+	int ret = 0;
+	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
+
+	if (!handle)
+		return -EINVAL;
+
+	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
+		ret = -EPERM;
+		ALOGE("handle get prime fd before register buffer.");
+	} else {
+		ret = 0;
+		*phy_addr = handle->phy_addr;
+	}
+
+    gralloc_drm_unlock_handle(_handle);
+	return ret;
 }
 
 /*
