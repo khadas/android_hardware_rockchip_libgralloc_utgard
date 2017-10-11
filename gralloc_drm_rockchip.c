@@ -70,7 +70,7 @@ struct rockchip_buffer {
 
 #if RK_DRM_GRALLOC
 
-#define RK_GRALLOC_VERSION "1.1.6"
+#define RK_GRALLOC_VERSION "1.1.7"
 #define ARM_RELEASE_VER "r7"
 
 #if RK_DRM_GRALLOC_DEBUG
