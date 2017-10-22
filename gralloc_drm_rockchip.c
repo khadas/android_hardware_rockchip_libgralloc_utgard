@@ -1,6 +1,6 @@
 #define LOG_TAG "GRALLOC-ROCKCHIP"
 
-#define ENABLE_DEBUG_LOG
+// #define ENABLE_DEBUG_LOG
 #include <log/custom_log.h>
 
 
@@ -136,11 +136,12 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 #else
 	int ret;
 	int w, h, format, usage;
-	size_t stride;
+	int stride; // pixel_stride
+	int byte_stride;
 	int changeFromat = -1;
 	int align = 8;
-	int bpp = 0;
-	int bpr = 0;
+	int bpp = 0; // bytes_per_pixel
+	int bpr = 0; // bytes_per_row
 #endif //end of RK_DRM_GRALLOC
 	uint32_t flags = 0;
 	struct drm_rockchip_gem_phys phys_arg;
@@ -189,6 +190,7 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 	{
 	    if (usage & GRALLOC_USAGE_HW_VIDEO_ENCODER )
 	    {
+		I("to force 'format' to HAL_PIXEL_FORMAT_YCrCb_NV12");
 	        format = HAL_PIXEL_FORMAT_YCrCb_NV12;
 	    }
 	    else
@@ -217,6 +219,7 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 				stride = GRALLOC_ALIGN(w, 16);
 				bpr = stride + GRALLOC_ALIGN(stride / 2, 16);
 				size = GRALLOC_ALIGN(h, 16) * bpr;
+				byte_stride = stride;
 				break;
 
 			case HAL_PIXEL_FORMAT_YV12:
@@ -226,7 +229,7 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 				stride = GRALLOC_ALIGN(w, 16);
 				bpr = stride + GRALLOC_ALIGN(stride / 2, 16);
 				size = GRALLOC_ALIGN(h, 2) * bpr;
-
+				byte_stride = stride;
 				break;
 #ifdef SUPPORT_LEGACY_FORMAT
 
@@ -234,13 +237,14 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 				stride = GRALLOC_ALIGN(w, 16);
 				bpr = stride + GRALLOC_ALIGN(stride / 2, 16);
 				size = GRALLOC_ALIGN(h, 16) * bpr;
+				byte_stride = stride;
 				break;
 
 			case HAL_PIXEL_FORMAT_YCbCr_422_I:
 				stride = GRALLOC_ALIGN(w, 16);
 				bpr = stride * 2;
 				size = h * bpr;
-
+				byte_stride = stride;
 				break;
 #endif
 			case HAL_PIXEL_FORMAT_YCrCb_NV12:
@@ -248,17 +252,18 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 				bpr = (w * bpp + (align-1)) & (~(align-1));
 				size = bpr * h;
 				stride = bpr / bpp;
+				byte_stride = stride;
+				D("for nv12_buf, size : %d, pixel_stride : %d, byte_stride : %d", size, stride, byte_stride);
 				break;
+
 			case HAL_PIXEL_FORMAT_YCrCb_NV12_10:
 				stride = w;
 				bpr = stride * 2;
 				size = h * bpr;
+				byte_stride = stride; // .T : need more test.
 				break;
-			case HAL_PIXEL_FORMAT_YCrCb_NV12_VIDEO:
-				ALOGE("unsupport format [0x%x] now", HAL_PIXEL_FORMAT_YCrCb_NV12_VIDEO);
-				break;
-
 			default:
+				ALOGE("unsupport format [0x%x] now", format);
 				return NULL;
 		}
 	}
@@ -291,8 +296,12 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 		bpr = GRALLOC_ALIGN(w * bpp, 64);
 		size = bpr * h;
 		stride = bpr / bpp;
+		byte_stride = bpr;
 	}
 #endif
+
+	/*-------------------------------------------------------*/
+
        if ( (usage & GRALLOC_USAGE_SW_READ_MASK) == GRALLOC_USAGE_SW_READ_OFTEN
 		|| format == HAL_PIXEL_FORMAT_YCrCb_NV12_10 )
        {
@@ -313,7 +322,11 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 		ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "try to use secure memory\n");
 	}
 
+	/*-------------------------------------------------------*/
+
 	if (handle->prime_fd >= 0) {
+		D("prime_fd is valid : %d", handle->prime_fd);
+
 		ret = drmPrimeFDToHandle(info->fd, handle->prime_fd,
 			&gem_handle);
 		if (ret) {
@@ -323,7 +336,9 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 			*c = 0;
 			goto err;
 		}
-                ALOGV("Got handle %d for fd %d\n", gem_handle, handle->prime_fd);
+		ALOGV("Got handle %d for fd %d\n", gem_handle, handle->prime_fd);
+
+		D("to create rk_bo from gem_handle('%d'), size : %d", gem_handle, size);
 		buf->bo = rockchip_bo_from_handle(info->rockchip, gem_handle,
 			flags, size);
 		if (!buf->bo) {
@@ -335,10 +350,11 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 			return NULL;
 		}
 	} else {
+		D("to create rk_bo directly, size : %d", size);
 		buf->bo = rockchip_bo_create(info->rockchip, size, flags);
 		if (!buf->bo) {
                         AERR("failed to allocate bo %dx%dx%dx%zd\n",
-                                handle->height, stride, bpr, size);
+                                handle->height, stride, byte_stride, size);
 			goto err;
 		}
 
@@ -393,9 +409,11 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 	}
 
 	handle->flags = PRIV_FLAGS_USES_ION;
-        handle->stride = bpr;//pixel_stride;
+
+        handle->stride = byte_stride;
         handle->pixel_stride = stride;
-        handle->byte_stride = bpr;
+        handle->byte_stride = byte_stride;
+
         handle->format = changeFromat >= 0 ? changeFromat : format;
         handle->size = size;
         handle->offset = 0;
@@ -411,7 +429,7 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 
         AINF("leave, w : %d, h : %d, format : 0x%x, usage : 0x%x. size=%d,pixel_stride=%d,byte_stride=%d",
                 handle->width, handle->height, handle->format, handle->usage, handle->size,
-                stride,bpr);
+                stride, byte_stride);
         AINF("leave: prime_fd=%d",handle->prime_fd);
 	return &buf->base;
 

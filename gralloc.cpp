@@ -23,6 +23,9 @@
 
 #define LOG_TAG "GRALLOC-MOD"
 
+// #define ENABLE_DEBUG_LOG
+#include <log/custom_log.h>
+
 #include <cutils/log.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -381,11 +384,13 @@ static int drm_mod_free_gpu0(alloc_device_t *dev, buffer_handle_t handle)
 
 static int drm_mod_alloc_gpu0(alloc_device_t *dev,
 		int w, int h, int format, int usage,
-		buffer_handle_t *handle, int *stride)
+		buffer_handle_t *handle, int *stride) // 'stride' : to return stride_in_pixel
 {
 	struct drm_module_t *dmod = (struct drm_module_t *) dev->common.module;
 	struct gralloc_drm_bo_t *bo;
 	int size, bpp, err;
+
+	D("enter, w : %d, h : %d, format : 0x%x, usage : 0x%x.", w, h, format, usage);
 
 #if RK_DRM_GRALLOC
     if(format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)

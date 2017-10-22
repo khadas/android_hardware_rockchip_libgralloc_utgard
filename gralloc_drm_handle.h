@@ -104,7 +104,7 @@ struct gralloc_drm_handle_t {
 	int usage;
 
 	int name;   /* the name of the bo */
-	int stride; /* the stride in bytes */
+	int stride; /* the stride in bytes, byte_stride. */
 	uint32_t phy_addr;
 	uint32_t reserve0;
 	uint32_t reserve1;

@@ -398,6 +398,8 @@ int gralloc_drm_free_bo_from_handle(buffer_handle_t handle)
 
 /*
  * Get the buffer handle and stride of a bo.
+ * @par stride
+ *	to return byte_stride.
  */
 buffer_handle_t gralloc_drm_bo_get_handle(struct gralloc_drm_bo_t *bo, int *stride)
 {
