@@ -37,6 +37,7 @@
 
 #include "gralloc_drm.h"
 #include "gralloc_drm_priv.h"
+#include "gralloc_buffer_priv.h"
 
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
@@ -268,8 +269,10 @@ static struct gralloc_drm_handle_t *create_bo_handle(int width,
 	handle->format = format;
 	handle->usage = usage;
 	handle->prime_fd = -1;
-
 #if RK_DRM_GRALLOC
+#ifdef USE_HWC2
+	handle->ashmem_fd = -1;
+#endif
 	handle->yuv_info = MALI_YUV_NO_INFO;
 	handle->phy_addr = 0;
 #endif
@@ -468,6 +471,97 @@ int gralloc_drm_bo_lock(struct gralloc_drm_bo_t *bo,
 	return 0;
 }
 
+/*
+ * Unlock a bo.
+ */
+void gralloc_drm_bo_unlock(struct gralloc_drm_bo_t *bo)
+{
+	int mapped = bo->locked_for &
+		(GRALLOC_USAGE_SW_WRITE_MASK | GRALLOC_USAGE_SW_READ_MASK);
+
+	if (!bo->lock_count)
+		return;
+
+	if (mapped)
+		bo->drm->drv->unmap(bo->drm->drv, bo);
+
+	bo->lock_count--;
+	if (!bo->lock_count)
+		bo->locked_for = 0;
+}
+
+#ifdef USE_HWC2
+int gralloc_drm_handle_get_rk_ashmem(buffer_handle_t _handle, struct rk_ashmem_t* rk_ashmem)
+{
+	int ret = 0;
+	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
+
+	if (!handle)
+		return -EINVAL;
+
+	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
+		ret = -EPERM;
+		ALOGE("handle get prime fd before register buffer.");
+	} else {
+		if (rk_ashmem) {
+				ret = 0;
+				if(gralloc_rk_ashmem_map(handle, 0) >= 0) {
+					 if (gralloc_rk_ashmem_read(handle, rk_ashmem) < 0) {
+						 ALOGE("%s: gralloc_rk_ashmem_read fail",__FUNCTION__);
+						 ret = -EINVAL;
+					 }
+					 gralloc_rk_ashmem_unmap(handle);
+				} else {
+					ALOGE("%s: gralloc_rk_ashmem_map fail",__FUNCTION__);
+					ret = -EINVAL;
+				}
+		} else  {
+				ALOGE("%s: rk_ashmem is null",__FUNCTION__);
+				ret = -EINVAL;
+		}
+
+	}
+
+    gralloc_drm_unlock_handle(_handle);
+	return ret;
+}
+
+int gralloc_drm_handle_set_rk_ashmem(buffer_handle_t _handle, struct rk_ashmem_t* rk_ashmem)
+{
+	int ret = 0;
+	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
+
+	if (!handle)
+		return -EINVAL;
+
+	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
+		ret = -EPERM;
+		ALOGE("handle get prime fd before register buffer.");
+	} else {
+		if (rk_ashmem) {
+				ret = 0;
+				if(gralloc_rk_ashmem_map(handle, 1) >= 0) {
+					 if (gralloc_rk_ashmem_write(handle, rk_ashmem) < 0) {
+						 ALOGE("%s: gralloc_rk_ashmem_write fail",__FUNCTION__);
+						 return -EINVAL;
+					 }
+					 gralloc_rk_ashmem_unmap(handle);
+				} else {
+					ALOGE("%s: gralloc_rk_ashmem_map fail",__FUNCTION__);
+					ret = -EINVAL;
+				}
+		} else  {
+				ALOGE("%s: rk_ashmem is null",__FUNCTION__);
+				ret = -EINVAL;
+		}
+
+	}
+
+    gralloc_drm_unlock_handle(_handle);
+	return ret;
+}
+#endif
+
 int gralloc_drm_handle_get_phy_addr(buffer_handle_t _handle, uint32_t *phy_addr)
 {
 	int ret = 0;
@@ -486,25 +580,6 @@ int gralloc_drm_handle_get_phy_addr(buffer_handle_t _handle, uint32_t *phy_addr)
 
     gralloc_drm_unlock_handle(_handle);
 	return ret;
-}
-
-/*
- * Unlock a bo.
- */
-void gralloc_drm_bo_unlock(struct gralloc_drm_bo_t *bo)
-{
-	int mapped = bo->locked_for &
-		(GRALLOC_USAGE_SW_WRITE_MASK | GRALLOC_USAGE_SW_READ_MASK);
-
-	if (!bo->lock_count)
-		return;
-
-	if (mapped)
-		bo->drm->drv->unmap(bo->drm->drv, bo);
-
-	bo->lock_count--;
-	if (!bo->lock_count)
-		bo->locked_for = 0;
 }
 
 int gralloc_drm_handle_get_prime_fd(buffer_handle_t _handle, int *fd)

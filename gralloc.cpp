@@ -84,10 +84,34 @@ static int drm_mod_perform(const struct gralloc_module_t *mod, int op, ...)
 			err = 0;
 		}
 		break;
-    case GRALLOC_MODULE_PERFORM_GET_HADNLE_PHY_ADDR:
-    {
-        buffer_handle_t hnd = va_arg(args, buffer_handle_t);
-        uint32_t *phy_addr = va_arg(args, uint32_t *);
+#ifdef USE_HWC2
+	case static_cast<int>(GRALLOC_MODULE_PERFORM_GET_RK_ASHMEM):
+		{
+			buffer_handle_t hnd = va_arg(args, buffer_handle_t);
+			struct rk_ashmem_t* rk_ashmem = va_arg(args, struct rk_ashmem_t*);
+
+			if (rk_ashmem != NULL)
+				err = gralloc_drm_handle_get_rk_ashmem(hnd,rk_ashmem);
+			else
+				err = -EINVAL;
+		}
+		break;
+	case static_cast<int>(GRALLOC_MODULE_PERFORM_SET_RK_ASHMEM):
+		{
+			buffer_handle_t hnd = va_arg(args, buffer_handle_t);
+			struct rk_ashmem_t* rk_ashmem = va_arg(args, struct rk_ashmem_t*);
+
+			if (rk_ashmem != NULL)
+				err = gralloc_drm_handle_set_rk_ashmem(hnd,rk_ashmem);
+			else
+				err = -EINVAL;
+		}
+		break;
+#endif
+	case GRALLOC_MODULE_PERFORM_GET_HADNLE_PHY_ADDR:
+		{
+			buffer_handle_t hnd = va_arg(args, buffer_handle_t);
+			uint32_t *phy_addr = va_arg(args, uint32_t *);
 
         if (phy_addr != NULL)
             err = gralloc_drm_handle_get_phy_addr(hnd,phy_addr);
@@ -123,7 +147,7 @@ static int drm_mod_perform(const struct gralloc_module_t *mod, int op, ...)
             buffer_handle_t hnd = va_arg(args, buffer_handle_t);
             uint64_t *internal_format = va_arg(args, uint64_t *);
 
-            if(internal_format > NULL)
+            if(internal_format != NULL)
                 err = gralloc_drm_handle_get_internal_format(hnd, internal_format);
             else
                 err = -EINVAL;

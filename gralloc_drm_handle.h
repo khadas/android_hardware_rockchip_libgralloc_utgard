@@ -73,6 +73,9 @@ struct gralloc_drm_handle_t {
 	int prime_fd;
 
 #if 1 //RK_DRM_GRALLOC
+#ifdef USE_HWC2
+	int ashmem_fd;
+#endif
 
        // uint64_t   internal_format;
        // int        internalWidth;
@@ -92,6 +95,12 @@ struct gralloc_drm_handle_t {
 		void   *cpu_addr;
 		uint64_t padding;
 	};
+#ifdef USE_HWC2
+	union {
+		void*	 ashmem_base;
+		uint64_t padding5;
+	};
+#endif
 	mali_gralloc_yuv_info yuv_info;
 #endif
 
@@ -117,7 +126,11 @@ struct gralloc_drm_handle_t {
 	int data_owner; /* owner of data (for validation) */
 };
 #define GRALLOC_DRM_HANDLE_MAGIC 0x12345678
+#ifdef USE_HWC2
+#define GRALLOC_DRM_HANDLE_NUM_FDS 2
+#else
 #define GRALLOC_DRM_HANDLE_NUM_FDS 1
+#endif
 #define GRALLOC_DRM_HANDLE_NUM_INTS (						\
 	((sizeof(struct gralloc_drm_handle_t) - sizeof(native_handle_t))/sizeof(int))	\
 	 - GRALLOC_DRM_HANDLE_NUM_FDS)
