@@ -116,8 +116,8 @@ struct rockchip_buffer {
 
 #endif
 
-static void drm_gem_rockchip_free(struct gralloc_drm_drv_t *drv,
-		struct gralloc_drm_bo_t *bo);
+/*static void drm_gem_rockchip_free(struct gralloc_drm_drv_t *drv,
+		struct gralloc_drm_bo_t *bo);*/
 
 static void drm_gem_rockchip_destroy(struct gralloc_drm_drv_t *drv)
 {
@@ -473,7 +473,7 @@ err:
 	return NULL;
 }
 
-static void drm_gem_rockchip_free(struct gralloc_drm_drv_t *drv,
+void drm_gem_rockchip_free(struct gralloc_drm_drv_t *drv,
 		struct gralloc_drm_bo_t *bo)
 {
 	struct rockchip_buffer *buf = (struct rockchip_buffer *)bo;

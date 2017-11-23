@@ -330,7 +330,8 @@ static void gralloc_drm_bo_destroy(struct gralloc_drm_bo_t *bo)
 	if (bo->refcount)
 		return;
 
-	bo->drm->drv->free(bo->drm->drv, bo);
+	//bo->drm->drv->free(bo->drm->drv, bo);
+	drm_gem_rockchip_free(NULL, bo);
 	if (imported) {
 		handle->data_owner = 0;
 		handle->data = 0;

@@ -98,6 +98,8 @@ struct gralloc_drm_bo_t {
 	unsigned int refcount;
 };
 
+void drm_gem_rockchip_free(struct gralloc_drm_drv_t *drv,        struct gralloc_drm_bo_t *bo);
+
 struct gralloc_drm_drv_t *gralloc_drm_drv_create_for_pipe(int fd, const char *name);
 struct gralloc_drm_drv_t *gralloc_drm_drv_create_for_intel(int fd);
 struct gralloc_drm_drv_t *gralloc_drm_drv_create_for_radeon(int fd);
