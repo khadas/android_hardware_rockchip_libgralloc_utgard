@@ -498,7 +498,10 @@ int gralloc_drm_handle_get_rk_ashmem(buffer_handle_t _handle, struct rk_ashmem_t
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -533,7 +536,11 @@ int gralloc_drm_handle_set_rk_ashmem(buffer_handle_t _handle, struct rk_ashmem_t
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
+
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -569,7 +576,11 @@ int gralloc_drm_handle_get_phy_addr(buffer_handle_t _handle, uint32_t *phy_addr)
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
+
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -589,7 +600,10 @@ int gralloc_drm_handle_get_prime_fd(buffer_handle_t _handle, int *fd)
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -610,7 +624,10 @@ int gralloc_drm_handle_get_attributes(buffer_handle_t _handle, void *attrs)
 	std::vector<int> *attributes = (std::vector<int> *)attrs;
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -656,7 +673,11 @@ int gralloc_drm_handle_get_width(buffer_handle_t _handle, int *width)
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
+
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -676,7 +697,11 @@ int gralloc_drm_handle_get_height(buffer_handle_t _handle, int *height)
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
+
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -696,7 +721,11 @@ int gralloc_drm_handle_get_stride(buffer_handle_t _handle, int *stride)
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
+
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -716,7 +745,11 @@ int gralloc_drm_handle_get_byte_stride(buffer_handle_t _handle, int *byte_stride
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
+
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -736,7 +769,11 @@ int gralloc_drm_handle_get_format(buffer_handle_t _handle, int *format)
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
+
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -756,7 +793,11 @@ int gralloc_drm_handle_get_size(buffer_handle_t _handle, int *size)
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
+
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
@@ -777,7 +818,11 @@ int gralloc_drm_handle_get_usage(buffer_handle_t _handle, int *usage)
 	struct gralloc_drm_handle_t *handle = gralloc_drm_handle(_handle);
 
 	if (!handle)
+	{
+		gralloc_drm_unlock_handle(_handle);
 		return -EINVAL;
+	}
+
 
 	if (unlikely(handle->data_owner != gralloc_drm_pid)) {
 		ret = -EPERM;
