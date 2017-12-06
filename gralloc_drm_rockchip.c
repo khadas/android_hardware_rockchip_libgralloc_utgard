@@ -293,7 +293,9 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 #endif
 				bpp = 2;
 				break;
-
+			case HAL_PIXEL_FORMAT_BLOB:
+				bpp = 1;
+				break;
 			default:
 				return NULL;
 		}
