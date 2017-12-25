@@ -16,13 +16,30 @@
 #include <cutils/properties.h>
 #endif //end of RK_DRM_GRALLOC
 #include <stdbool.h>
+#include <sys/stat.h>
 
 #ifdef USE_HWC2
 #include "gralloc_buffer_priv.h"
 #endif
 
-
+#define RK_CTS_WORKROUND	(1)
 #define UNUSED(...) (void)(__VA_ARGS__)
+
+#if RK_CTS_WORKROUND
+#define VIEW_CTS_FILE		"/metadata/view_cts.ini"
+#define VIEW_CTS_PROG_NAME	"android.view.cts"
+#define VIEW_CTS_HINT		"view_cts"
+#define BIG_SCALE_HINT		"big_scale"
+typedef unsigned int       u32;
+typedef enum
+{
+	IMG_STRING_TYPE		= 1,                    /*!< String type */
+	IMG_FLOAT_TYPE		,                       /*!< Float type */
+	IMG_UINT_TYPE		,                       /*!< Unsigned Int type */
+	IMG_INT_TYPE		,                       /*!< (Signed) Int type */
+	IMG_FLAG_TYPE                               /*!< Flag Type */
+}IMG_DATA_TYPE;
+#endif
 
 struct dma_buf_sync {
         __u64 flags;
@@ -114,6 +131,361 @@ struct rockchip_buffer {
 #define ODD_ALIGN(x, align)		(((x) % ((align) * 2) == 0) ? ((x) + (align)) : (x))
 #define GRALLOC_ODD_ALIGN( value, base )   ODD_ALIGN(GRALLOC_ALIGN(value, base), base)
 
+#endif
+
+#if RK_CTS_WORKROUND
+static bool ConvertCharToData(const char *pszHintName, const char *pszData, void *pReturn, IMG_DATA_TYPE eDataType)
+{
+	bool bFound = false;
+
+
+	switch(eDataType)
+	{
+		case IMG_STRING_TYPE:
+		{
+			strcpy((char*)pReturn, pszData);
+
+			ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "Hint: Setting %s to %s\n", pszHintName, (char*)pReturn);
+
+			bFound = true;
+
+			break;
+		}
+		case IMG_FLOAT_TYPE:
+		{
+			*(float*)pReturn = (float) atof(pszData);
+
+			ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "Hint: Setting %s to %f", pszHintName, *(float*)pReturn);
+
+			bFound = true;
+
+			break;
+		}
+		case IMG_UINT_TYPE:
+		case IMG_FLAG_TYPE:
+		{
+			/* Changed from atoi to stroul to support hexadecimal numbers */
+			*(u32*)pReturn = (u32) strtoul(pszData, NULL, 0);
+			if (*(u32*)pReturn > 9)
+			{
+				ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "Hint: Setting %s to %u (0x%X)", pszHintName, *(u32*)pReturn, *(u32*)pReturn);
+			}
+			else
+			{
+				ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "Hint: Setting %s to %u", pszHintName, *(u32*)pReturn);
+			}
+			bFound = true;
+
+			break;
+		}
+		case IMG_INT_TYPE:
+		{
+			*(int*)pReturn = (int) atoi(pszData);
+
+			ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "Hint: Setting %s to %d\n", pszHintName, *(int*)pReturn);
+
+			bFound = true;
+
+			break;
+		}
+		default:
+		{
+			ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "ConvertCharToData: Bad eDataType");
+
+			break;
+		}
+	}
+
+	return bFound;
+}
+
+bool FindAppHintInFile(char *pszFileName, const char *pszAppName,
+								  const char *pszHintName, void *pReturn,
+								  IMG_DATA_TYPE eDataType)
+{
+	FILE *regFile;
+	bool bFound = false;
+
+	regFile = fopen(pszFileName, "r");
+
+	if(regFile)
+	{
+		char pszTemp[1024], pszApplicationSectionName[1024];
+		int iLineNumber;
+		bool bUseThisSection, bInAppSpecificSection;
+
+		/* Build the section name */
+		snprintf(pszApplicationSectionName, 1024, "[%s]", pszAppName);
+
+		bUseThisSection 		= false;
+		bInAppSpecificSection	= false;
+
+		iLineNumber = -1;
+
+		while(fgets(pszTemp, 1024, regFile))
+		{
+			size_t uiStrLen;
+
+			iLineNumber++;
+			ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "FindAppHintInFile iLineNumber=%d pszTemp=%s",iLineNumber,pszTemp);
+
+			uiStrLen = strlen(pszTemp);
+
+			if (pszTemp[uiStrLen-1]!='\n')
+			{
+			    ALOGE("FindAppHintInFile : Error in %s at line %u",pszFileName,iLineNumber);
+
+				continue;
+			}
+
+			if((uiStrLen >= 2) && (pszTemp[uiStrLen-2] == '\r'))
+			{
+				/* CRLF (Windows) line ending */
+				pszTemp[uiStrLen-2] = '\0';
+			}
+			else
+			{
+				/* LF (unix) line ending */
+				pszTemp[uiStrLen-1] = '\0';
+			}
+
+			switch (pszTemp[0])
+			{
+				case '[':
+				{
+					/* Section */
+					bUseThisSection 		= false;
+					bInAppSpecificSection	= false;
+
+					if (!strcmp("[default]", pszTemp))
+					{
+						bUseThisSection = true;
+					}
+					else if (!strcmp(pszApplicationSectionName, pszTemp))
+					{
+						bUseThisSection 		= true;
+						bInAppSpecificSection 	= true;
+					}
+
+					break;
+				}
+				default:
+				{
+					char *pszPos;
+
+					if (!bUseThisSection)
+					{
+						/* This line isn't for us */
+						continue;
+					}
+
+					pszPos = strstr(pszTemp, pszHintName);
+
+					if (pszPos!=pszTemp)
+					{
+						/* Hint name isn't at start of string */
+						continue;
+					}
+
+					if (*(pszPos + strlen(pszHintName)) != '=')
+					{
+						/* Hint name isn't exactly correct, or isn't followed by an equals sign */
+						continue;
+					}
+
+					/* Move to after the equals sign */
+					pszPos += strlen(pszHintName) + 1;
+
+					/* Convert anything after the equals sign to the requested data type */
+					bFound = ConvertCharToData(pszHintName, pszPos, pReturn, eDataType);
+
+					if (bFound && bInAppSpecificSection)
+					{
+						/*
+						// If we've found the hint in the application specific section we may
+						// as well drop out now, since this should override any default setting
+						*/
+						fclose(regFile);
+
+						return true;
+					}
+
+					break;
+				}
+			}
+		}
+
+		fclose(regFile);
+	}
+	else
+	{
+		regFile = fopen(pszFileName, "wb+");
+		if(regFile)
+		{
+			char acBuf[] = "[android.view.cts]\n"
+							"view_cts=0\n"
+							"big_scale=0\n";
+			fprintf(regFile,"%s",acBuf);
+			fclose(regFile);
+			chmod(pszFileName, 0x777);
+		}
+		else
+		{
+			ALOGE("%s open fail errno=0x%x  (%s)",__FUNCTION__, errno,strerror(errno));
+		}
+	}
+
+	return bFound;
+}
+
+bool ModifyAppHintInFile(char *pszFileName, const char *pszAppName,
+								const char *pszHintName, void *pReturn, int pSet,
+								IMG_DATA_TYPE eDataType)
+{
+	FILE *regFile;
+	bool bFound = false;
+
+	regFile = fopen(pszFileName, "r+");
+
+	if(regFile)
+	{
+		char pszTemp[1024], pszApplicationSectionName[1024];
+		int iLineNumber;
+		bool bUseThisSection, bInAppSpecificSection;
+		int offset = 0;
+
+		/* Build the section name */
+		snprintf(pszApplicationSectionName, 1024, "[%s]", pszAppName);
+
+		bUseThisSection		  = false;
+		bInAppSpecificSection   = false;
+
+		iLineNumber = -1;
+
+		while(fgets(pszTemp, 1024, regFile))
+		{
+			size_t uiStrLen;
+
+			iLineNumber++;
+			ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "ModifyAppHintInFile iLineNumber=%d pszTemp=%s",iLineNumber,pszTemp);
+
+			uiStrLen = strlen(pszTemp);
+
+			if (pszTemp[uiStrLen-1]!='\n')
+			{
+				ALOGE("FindAppHintInFile : Error in %s at line %u",pszFileName,iLineNumber);
+				continue;
+			}
+
+			if((uiStrLen >= 2) && (pszTemp[uiStrLen-2] == '\r'))
+			{
+				/* CRLF (Windows) line ending */
+				pszTemp[uiStrLen-2] = '\0';
+			}
+			else
+			{
+				/* LF (unix) line ending */
+				pszTemp[uiStrLen-1] = '\0';
+			}
+
+			switch (pszTemp[0])
+			{
+				case '[':
+				{
+					/* Section */
+					bUseThisSection		  = false;
+					bInAppSpecificSection   = false;
+
+					if (!strcmp("[default]", pszTemp))
+					{
+						bUseThisSection = true;
+					}
+					else if (!strcmp(pszApplicationSectionName, pszTemp))
+					{
+						bUseThisSection		  = true;
+						bInAppSpecificSection   = true;
+					}
+
+					break;
+				}
+				default:
+				{
+					char *pszPos;
+
+					if (!bUseThisSection)
+					{
+						/* This line isn't for us */
+						offset += uiStrLen;
+						continue;
+					}
+
+					pszPos = strstr(pszTemp, pszHintName);
+
+					if (pszPos!=pszTemp)
+					{
+						/* Hint name isn't at start of string */
+						offset += uiStrLen;
+						continue;
+					}
+
+					if (*(pszPos + strlen(pszHintName)) != '=')
+					{
+						/* Hint name isn't exactly correct, or isn't followed by an equals sign */
+						offset += uiStrLen;
+						continue;
+					}
+
+					/* Move to after the equals sign */
+					pszPos += strlen(pszHintName) + 1;
+
+					/* Convert anything after the equals sign to the requested data type */
+					bFound = ConvertCharToData(pszHintName, pszPos, pReturn, eDataType);
+
+					if (bFound && bInAppSpecificSection)
+					{
+						offset += (strlen(pszHintName) + 1);
+						if(eDataType == IMG_INT_TYPE && *((int*)pReturn) != pSet)
+						{
+							fseek(regFile, offset, SEEK_SET);
+							fprintf(regFile,"%d",pSet);
+						}
+						/*
+						// If we've found the hint in the application specific section we may
+						// as well drop out now, since this should override any default setting
+						*/
+						fclose(regFile);
+
+						return true;
+					}
+
+					break;
+				}
+			}
+			offset += uiStrLen;
+		}
+
+		fclose(regFile);
+	}
+	else
+	{
+		regFile = fopen(pszFileName, "wb+");
+		if(regFile)
+		{
+			char acBuf[] = "[android.view.cts]\n"
+							"view_cts=0\n"
+							"big_scale=0\n";
+			fprintf(regFile,"%s",acBuf);
+			fclose(regFile);
+			chmod(pszFileName, 0x777);
+		}
+		else
+		{
+			ALOGE("%s open faile errno=0x%x  (%s)",__FUNCTION__, errno,strerror(errno));
+		}
+	}
+
+	return bFound;
+}
 #endif
 
 /*static void drm_gem_rockchip_free(struct gralloc_drm_drv_t *drv,
@@ -525,6 +897,25 @@ static int drm_gem_rockchip_map(struct gralloc_drm_drv_t *drv,
 			ALOGE("failed to map bo\n");
 			ret = -1;
 		}
+#if RK_CTS_WORKROUND
+		else {
+			int big_scale;
+			static int iCnt = 0;
+			FindAppHintInFile(VIEW_CTS_FILE, VIEW_CTS_PROG_NAME, BIG_SCALE_HINT, &big_scale, IMG_INT_TYPE);
+			if(big_scale && gr_handle->usage == 0x603 ) {
+				char* pAddr = (char*)(*addr);
+				memset(*addr,0xFF,gr_handle->height*gr_handle->byte_stride);
+				ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "memset 0xff  byte_stride=%d iCnt=%d",gr_handle->byte_stride,iCnt);
+				iCnt++;
+			}
+			if(iCnt == 400 && big_scale)
+			{
+				ModifyAppHintInFile(VIEW_CTS_FILE, VIEW_CTS_PROG_NAME, BIG_SCALE_HINT, &big_scale, 0, IMG_INT_TYPE);
+				ALOGD_IF(RK_DRM_GRALLOC_DEBUG,"reset big_scale");
+			}
+		}
+
+#endif
 	}
 
 	if(buf && buf->bo && (buf->bo->flags & ROCKCHIP_BO_CACHABLE))
