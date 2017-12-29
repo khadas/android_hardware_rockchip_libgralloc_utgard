@@ -24,6 +24,7 @@
 
 #define RK_CTS_WORKROUND	(1)
 #define UNUSED(...) (void)(__VA_ARGS__)
+#define USAGE_CONTAIN_VALUE(value,mask) ((usage & mask) == value)
 
 #if RK_CTS_WORKROUND
 #define VIEW_CTS_FILE		"/metadata/view_cts.ini"
@@ -689,7 +690,7 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
                flags = ROCKCHIP_BO_CACHABLE;
        }
 
-       if(usage & GRALLOC_USAGE_TO_USE_PHY_CONT)
+       if(USAGE_CONTAIN_VALUE(GRALLOC_USAGE_TO_USE_PHY_CONT,GRALLOC_USAGE_ROT_MASK))
        {
                flags |= ROCKCHIP_BO_CONTIG;
                ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "try to use Physically Continuous memory\n");
@@ -749,7 +750,7 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 
 		buf->base.fb_handle = gem_handle;
 
-		if(usage & GRALLOC_USAGE_TO_USE_PHY_CONT)
+		if(USAGE_CONTAIN_VALUE(GRALLOC_USAGE_TO_USE_PHY_CONT,GRALLOC_USAGE_ROT_MASK))
 		{
 			phys_arg.handle = gem_handle;
 			ret = drmIoctl(info->fd, DRM_IOCTL_ROCKCHIP_GEM_GET_PHYS, &phys_arg);
