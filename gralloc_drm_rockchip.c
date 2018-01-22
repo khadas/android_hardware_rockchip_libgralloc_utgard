@@ -200,6 +200,36 @@ static bool ConvertCharToData(const char *pszHintName, const char *pszData, void
 	return bFound;
 }
 
+static int getProcessCmdLine(char* outBuf, size_t bufSize)
+{
+	int ret = 0;
+
+	FILE* file = NULL;
+	long pid = 0;
+	char procPath[128]={0};
+
+	pid = getpid();
+	sprintf(procPath, "/proc/%ld/cmdline", pid);
+
+	file = fopen(procPath, "r");
+	if ( NULL == file )
+	{
+		ALOGE("fail to open file (%s)",strerror(errno));
+	}
+
+	if ( NULL == fgets(outBuf, bufSize - 1, file) )
+	{
+		ALOGE("fail to read from cmdline_file.");
+	}
+
+	if ( NULL != file )
+	{
+		fclose(file);
+	}
+
+	return ret;
+}
+
 bool FindAppHintInFile(char *pszFileName, const char *pszAppName,
 								  const char *pszHintName, void *pReturn,
 								  IMG_DATA_TYPE eDataType)
@@ -449,6 +479,7 @@ bool ModifyAppHintInFile(char *pszFileName, const char *pszAppName,
 						{
 							fseek(regFile, offset, SEEK_SET);
 							fprintf(regFile,"%d",pSet);
+							*((int*)pReturn) = pSet;
 						}
 						/*
 						// If we've found the hint in the application specific section we may
@@ -902,20 +933,26 @@ static int drm_gem_rockchip_map(struct gralloc_drm_drv_t *drv,
 		else {
 			int big_scale;
 			static int iCnt = 0;
-			FindAppHintInFile(VIEW_CTS_FILE, VIEW_CTS_PROG_NAME, BIG_SCALE_HINT, &big_scale, IMG_INT_TYPE);
-			if(big_scale && gr_handle->usage == 0x603 ) {
-				char* pAddr = (char*)(*addr);
-				memset(*addr,0xFF,gr_handle->height*gr_handle->byte_stride);
-				ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "memset 0xff  byte_stride=%d iCnt=%d",gr_handle->byte_stride,iCnt);
-				iCnt++;
-			}
-			if(iCnt == 400 && big_scale)
+			char cmdline[256] = {0};
+
+			getProcessCmdLine(cmdline, sizeof(cmdline));
+
+			if(!strcmp(cmdline,"android.view.cts"))
 			{
-				ModifyAppHintInFile(VIEW_CTS_FILE, VIEW_CTS_PROG_NAME, BIG_SCALE_HINT, &big_scale, 0, IMG_INT_TYPE);
-				ALOGD_IF(RK_DRM_GRALLOC_DEBUG,"reset big_scale");
+				FindAppHintInFile(VIEW_CTS_FILE, VIEW_CTS_PROG_NAME, BIG_SCALE_HINT, &big_scale, IMG_INT_TYPE);
+				if(big_scale && gr_handle->usage == 0x603 ) {
+					char* pAddr = (char*)(*addr);
+					memset(*addr,0xFF,gr_handle->height*gr_handle->byte_stride);
+					ALOGD_IF(1, "memset 0xff byte_stride=%d iCnt=%d",gr_handle->byte_stride,iCnt);
+					iCnt++;
+				}
+				if(iCnt == 400 && big_scale)
+				{
+					ModifyAppHintInFile(VIEW_CTS_FILE, VIEW_CTS_PROG_NAME, BIG_SCALE_HINT, &big_scale, 0, IMG_INT_TYPE);
+					ALOGD_IF(1,"reset big_scale");
+				}
 			}
 		}
-
 #endif
 	}
 
