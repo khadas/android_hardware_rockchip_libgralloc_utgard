@@ -888,7 +888,11 @@ void drm_gem_rockchip_free(struct gralloc_drm_drv_t *drv,
 	UNUSED(drv);
 
         if (!gr_handle)
+        {
+                ALOGE("%s: invalid handle",__FUNCTION__);
+                gralloc_drm_unlock_handle((buffer_handle_t)bo->handle);
                 return;
+        }
 
 #if RK_DRM_GRALLOC
 #ifdef USE_HWC2
