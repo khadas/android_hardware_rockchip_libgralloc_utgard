@@ -195,7 +195,11 @@ ifeq ($(TARGET_USES_HWC2),true)
     LOCAL_CFLAGS += -DUSE_HWC2
 endif
 
+ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk322x)
+LOCAL_MODULE := gralloc.rk3229
+else
 LOCAL_MODULE := gralloc.$(TARGET_BOARD_HARDWARE)
+endif
 ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
