@@ -195,7 +195,7 @@ ifeq ($(TARGET_USES_HWC2),true)
     LOCAL_CFLAGS += -DUSE_HWC2
 endif
 
-ifeq ($(strip $(TARGET_BOARD_PLATFORM)),rk322x)
+ifeq ($(strip $(TARGET_PRODUCT)),iot_rk3229_evb)
 LOCAL_MODULE := gralloc.rk3229
 else
 LOCAL_MODULE := gralloc.$(TARGET_BOARD_HARDWARE)
