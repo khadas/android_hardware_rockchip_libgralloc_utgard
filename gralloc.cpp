@@ -45,7 +45,7 @@
 #include <cutils/atomic.h>
 #endif
 
-#define UNUSED(...) (void)(__VA_ARGS__)
+#define UNUSED(...) ( (void)(__VA_ARGS__) )
 
 /*
  * Initialize the DRM device object
@@ -363,8 +363,8 @@ static int drm_mod_lock_ycbcr(gralloc_module_t const* module,
 
 static int drm_mod_unlock(const gralloc_module_t *mod, buffer_handle_t handle)
 {
-	struct drm_module_t *dmod = (struct drm_module_t *) mod;
 	struct gralloc_drm_bo_t *bo;
+    UNUSED(mod);
 
 	bo = gralloc_drm_bo_from_handle(handle);
 	if (!bo)
@@ -400,8 +400,7 @@ static int drm_mod_close_gpu0(struct hw_device_t *dev)
 
 static int drm_mod_free_gpu0(alloc_device_t *dev, buffer_handle_t handle)
 {
-	struct drm_module_t *dmod = (struct drm_module_t *) dev->common.module;
-	struct gralloc_drm_bo_t *bo;
+    UNUSED(dev);
 
 	return gralloc_drm_free_bo_from_handle(handle);
 }
@@ -412,7 +411,7 @@ static int drm_mod_alloc_gpu0(alloc_device_t *dev,
 {
 	struct drm_module_t *dmod = (struct drm_module_t *) dev->common.module;
 	struct gralloc_drm_bo_t *bo;
-	int size, bpp, err;
+	int bpp;
 
 	D("enter, w : %d, h : %d, format : 0x%x, usage : 0x%x.", w, h, format, usage);
 
