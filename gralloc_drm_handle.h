@@ -28,6 +28,7 @@
 #include <cutils/native_handle.h>
 #include <system/graphics.h>
 #include <hardware/gralloc.h>
+#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {

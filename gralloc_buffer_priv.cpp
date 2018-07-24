@@ -17,8 +17,10 @@
  */
 
 #include <cutils/ashmem.h>
-#include <cutils/log.h>
+#include <log/log.h>
 #include <sys/mman.h>
+#include <sys/user.h>
+#include <unistd.h>
 #include "gralloc_drm_handle.h"
 #include "gralloc_buffer_priv.h"
 

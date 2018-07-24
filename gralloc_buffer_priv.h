@@ -21,6 +21,7 @@
 
 //#include "gralloc_priv.h"
 #include <errno.h>
+#include <sys/user.h>
 #include <string.h>
 #include <sys/mman.h>
 #include "gralloc_drm_handle.h"

@@ -23,7 +23,7 @@
 
 #define LOG_TAG "GRALLOC-DRM"
 
-#include <cutils/log.h>
+#include <log/log.h>
 #include <cutils/atomic.h>
 #include <cutils/properties.h>
 #include <stdlib.h>
@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 #include <vector>
 

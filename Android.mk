@@ -93,6 +93,12 @@ LOCAL_C_INCLUDES := \
 	external/libdrm \
 	external/libdrm/include/drm
 
+LOCAL_HEADER_LIBRARIES += \
+	libhardware_headers \
+    liblog_headers \
+	libutils_headers \
+	libcutils_headers
+
 LOCAL_SHARED_LIBRARIES := \
 	libdrm \
 	liblog \
@@ -177,10 +183,15 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	gralloc.cpp
 
-
 LOCAL_C_INCLUDES := \
 	external/libdrm \
 	external/libdrm/include/drm
+
+LOCAL_HEADER_LIBRARIES += \
+    libutils_headers \
+	liblog_headers \
+	libhardware_headers \
+	libcutils_headers
 
 LOCAL_SHARED_LIBRARIES := \
 	libgralloc_drm \
