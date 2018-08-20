@@ -309,12 +309,11 @@ static int drm_mod_lock_ycbcr(gralloc_module_t const* module,
 
         int ystride;
         switch (hnd->format) {
-        case HAL_PIXEL_FORMAT_YCrCb_420_SP:
-        case HAL_PIXEL_FORMAT_YCbCr_420_888:
+        case HAL_PIXEL_FORMAT_YCrCb_420_SP: // NV21
             ystride = hnd->stride;
             ycbcr->y  = (void*)cpu_addr;
-            ycbcr->cr = (void*)(cpu_addr + ystride * hnd->height);
-            ycbcr->cb = (void*)(cpu_addr + ystride * hnd->height + 1);
+            ycbcr->cr = (void*)(cpu_addr + ystride * hnd->height); // 'cr' : V
+            ycbcr->cb = (void*)(cpu_addr + ystride * hnd->height + 1); // 'cb : U
             ycbcr->ystride = ystride;
             ycbcr->cstride = ystride;
             ycbcr->chroma_step = 2;

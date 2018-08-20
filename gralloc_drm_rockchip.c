@@ -591,15 +591,17 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 		size += 64 * w_mbs * h_mbs;
 	}
 #else
+
 	format = handle->format;
 	w = handle->width;
 	h = handle->height;
 	usage = handle->usage;
+
 	if (format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)
 	{
 	    if (usage & GRALLOC_USAGE_HW_VIDEO_ENCODER )
 	    {
-		I("to force 'format' to HAL_PIXEL_FORMAT_YCrCb_NV12");
+		    I("to force 'format' to HAL_PIXEL_FORMAT_YCrCb_NV12");
 	        format = HAL_PIXEL_FORMAT_YCrCb_NV12;
 	    }
 	    else
@@ -608,6 +610,11 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 	        format = HAL_PIXEL_FORMAT_RGBX_8888;
 	    }
 	}
+    else if ( HAL_PIXEL_FORMAT_YCbCr_420_888 == format )
+    {
+        I("to use NV12 for HAL_PIXEL_FORMAT_YCbCr_420_888.");
+        format = HAL_PIXEL_FORMAT_YCrCb_NV12;
+    }
 
 	if (format == HAL_PIXEL_FORMAT_YCrCb_420_SP || format == HAL_PIXEL_FORMAT_YV12
 	        /* HAL_PIXEL_FORMAT_YCbCr_420_SP, HAL_PIXEL_FORMAT_YCbCr_420_P, HAL_PIXEL_FORMAT_YCbCr_422_I are not defined in Android.
@@ -618,13 +625,12 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 	        || format == HAL_PIXEL_FORMAT_YCbCr_420_SP || format == HAL_PIXEL_FORMAT_YCbCr_420_P || format == HAL_PIXEL_FORMAT_YCbCr_422_I
 #endif
 		|| format == HAL_PIXEL_FORMAT_YCrCb_NV12 || format == HAL_PIXEL_FORMAT_YCrCb_NV12_10
-		|| format == HAL_PIXEL_FORMAT_YCrCb_NV12_VIDEO || format == HAL_PIXEL_FORMAT_YCbCr_420_888
+		|| format == HAL_PIXEL_FORMAT_YCrCb_NV12_VIDEO
 	   )
 	{
 		switch (format)
 		{
 			case HAL_PIXEL_FORMAT_YCrCb_420_SP:
-			case HAL_PIXEL_FORMAT_YCbCr_420_888:
 				stride = GRALLOC_ALIGN(w, 16);
 				bpr = stride + GRALLOC_ALIGN(stride / 2, 16);
 				size = GRALLOC_ALIGN(h, 16) * bpr;
