@@ -1008,11 +1008,11 @@ static int drm_init_version()
 
         /* RK_GRAPHICS_VER=commit-id:067e5d0: only keep string after '=' */
         sscanf(RK_GRAPHICS_VER, "%*[^=]=%s", acCommit);
-        property_get("sys.ggralloc.version", value, "NULL");
+        property_get("vendor.ggralloc.version", value, "NULL");
         if(!strcmp(value,"NULL"))
         {
-                property_set("sys.ggralloc.version", RK_GRALLOC_VERSION);
-                property_set("sys.ggralloc.commit", acCommit);
+                property_set("vendor.ggralloc.version", RK_GRALLOC_VERSION);
+                property_set("vendor.ggralloc.commit", acCommit);
                 ALOGD(RK_GRAPHICS_VER);
                 ALOGD("gralloc ver '%s' on arm_release_ver '%s'.",
                         RK_GRALLOC_VERSION,
