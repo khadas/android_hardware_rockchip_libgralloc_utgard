@@ -27,7 +27,7 @@
 #define USAGE_CONTAIN_VALUE(value,mask) ((usage & mask) == value)
 
 #if RK_CTS_WORKROUND
-#define VIEW_CTS_FILE		"/data/ota/view_cts.ini"
+#define VIEW_CTS_FILE		"/data/data/android.view.cts/view_cts.ini"
 #define VIEW_CTS_PROG_NAME	"android.view.cts"
 #define VIEW_CTS_HINT		"view_cts"
 #define BIG_SCALE_HINT		"big_scale"
