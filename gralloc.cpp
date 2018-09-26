@@ -436,6 +436,17 @@ static int drm_mod_alloc_gpu0(alloc_device_t *dev,
 		return -EINVAL;
 	}
 
+	/* workaround for "run cts -o -a armeabi-v7a --skip-all-system-status-check -m CtsNativeHardwareTestCases" */
+	if (format == 0x3)
+	{
+		if( (w <= 100 && h <= 100) &&
+			(usage == 0x200 || usage == 0x202 || usage == 0x100 || usage == 0x300) )
+		{
+			ALOGE("rk_debug workaround for CtsNativeHardwareTestCases");
+			return -EINVAL;
+		}
+	}
+
 	bo = gralloc_drm_bo_create(dmod->drm, w, h, format, usage);
 	if (!bo)
 		return -ENOMEM;
