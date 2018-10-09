@@ -598,14 +598,17 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 
 	if (format == HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED)
 	{
-	    if (usage & GRALLOC_USAGE_HW_VIDEO_ENCODER )
+	    if ( (usage & GRALLOC_USAGE_HW_VIDEO_ENCODER)
+            || (usage & GRALLOC_USAGE_HW_CAMERA_WRITE) )
 	    {
-		    I("to force 'format' to HAL_PIXEL_FORMAT_YCrCb_NV12, for HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED .");
+		    I("to force 'format' to HAL_PIXEL_FORMAT_YCrCb_NV12, for HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, usage : 0x%x.",
+              usage);
 	        format = HAL_PIXEL_FORMAT_YCrCb_NV12;
 	    }
 	    else
 	    {
-            I("to force 'format' to HAL_PIXEL_FORMAT_RGBX_8888, for HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED .");
+            I("to force 'format' to HAL_PIXEL_FORMAT_RGBX_8888, for HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED, usage : 0x%x.",
+              usage);
 	        format = HAL_PIXEL_FORMAT_RGBX_8888;
 	    }
 	}
