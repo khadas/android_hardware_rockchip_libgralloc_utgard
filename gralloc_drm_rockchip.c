@@ -547,7 +547,6 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 	int w, h, format, usage;
 	int stride; // pixel_stride
 	int byte_stride;
-	int changeFromat = -1;
 	int align = 8;
 	int bpp = 0; // bytes_per_pixel
 	int bpr = 0; // bytes_per_row
@@ -601,12 +600,12 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 	{
 	    if (usage & GRALLOC_USAGE_HW_VIDEO_ENCODER )
 	    {
-		    I("to force 'format' to HAL_PIXEL_FORMAT_YCrCb_NV12");
+		    I("to force 'format' to HAL_PIXEL_FORMAT_YCrCb_NV12, for HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED .");
 	        format = HAL_PIXEL_FORMAT_YCrCb_NV12;
 	    }
 	    else
 	    {
-	        changeFromat = format;
+            I("to force 'format' to HAL_PIXEL_FORMAT_RGBX_8888, for HAL_PIXEL_FORMAT_IMPLEMENTATION_DEFINED .");
 	        format = HAL_PIXEL_FORMAT_RGBX_8888;
 	    }
 	}
@@ -859,7 +858,7 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
         handle->pixel_stride = stride;
         handle->byte_stride = byte_stride;
 
-        handle->format = changeFromat >= 0 ? changeFromat : format;
+        handle->format = format;
         handle->size = size;
         handle->offset = 0;
         handle->cpu_addr = rockchip_bo_map(buf->bo);
