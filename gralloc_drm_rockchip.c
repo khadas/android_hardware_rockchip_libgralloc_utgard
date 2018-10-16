@@ -772,7 +772,7 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 		D("to create rk_bo directly, size : %d", size);
 		buf->bo = rockchip_bo_create(info->rockchip, size, flags);
 		if (!buf->bo) {
-                        AERR("failed to allocate bo %dx%dx%dx%zd\n",
+                        AERR("failed to allocate bo %dx%dx%dx%d\n",
                                 handle->height, stride, byte_stride, size);
 			goto err;
 		}
