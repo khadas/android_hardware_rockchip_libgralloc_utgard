@@ -31,6 +31,9 @@ extern "C" {
 #if 0
 // private gralloc buffer manipulation API
 
+/**
+ * .DP : gralloc_buffer_attr_buffer_t
+ */
 struct attr_region
 {
 	/* Rectangle to be cropped from the full frame (Origin in top-left corner!) */
