@@ -8,7 +8,9 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <drm.h>
+extern "C" {
 #include <rockchip/rockchip_drmif.h>
+}
 #include "gralloc_helper.h"
 #include "gralloc_drm.h"
 #include "gralloc_drm_priv.h"
@@ -230,7 +232,7 @@ static int getProcessCmdLine(char* outBuf, size_t bufSize)
 	return ret;
 }
 
-bool FindAppHintInFile(char *pszFileName, const char *pszAppName,
+bool FindAppHintInFile(const char *pszFileName, const char *pszAppName,
 								  const char *pszHintName, void *pReturn,
 								  IMG_DATA_TYPE eDataType)
 {
@@ -369,7 +371,7 @@ bool FindAppHintInFile(char *pszFileName, const char *pszAppName,
 	return bFound;
 }
 
-bool ModifyAppHintInFile(char *pszFileName, const char *pszAppName,
+bool ModifyAppHintInFile(const char *pszFileName, const char *pszAppName,
 								const char *pszHintName, void *pReturn, int pSet,
 								IMG_DATA_TYPE eDataType)
 {
@@ -553,10 +555,11 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 #endif //end of RK_DRM_GRALLOC
 	uint32_t flags = 0;
 	struct drm_rockchip_gem_phys phys_arg;
+    int private_usage;
 
 	phys_arg.phy_addr = 0;
 
-	buf = calloc(1, sizeof(*buf));
+	buf = (struct rockchip_buffer*)calloc(1, sizeof(*buf));
 	if (!buf) {
                 ALOGE("Failed to allocate buffer wrapper\n");
 		return NULL;
@@ -828,8 +831,7 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 			}
 	}
 #endif
-	int private_usage = usage & (GRALLOC_USAGE_PRIVATE_0 |
-	                                  GRALLOC_USAGE_PRIVATE_1);
+	private_usage = usage & (GRALLOC_USAGE_PRIVATE_0 | GRALLOC_USAGE_PRIVATE_1);
 
 	switch (private_usage)
 	{
@@ -1033,7 +1035,7 @@ struct gralloc_drm_drv_t *gralloc_drm_drv_create_for_rockchip(int fd)
         drm_init_version();
 #endif
 
-	info = calloc(1, sizeof(*info));
+	info = (struct rockchip_info*)calloc(1, sizeof(*info));
 	if (!info) {
 		ALOGE("Failed to allocate rockchip gralloc device\n");
 		return NULL;

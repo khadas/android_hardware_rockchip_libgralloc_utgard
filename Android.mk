@@ -128,7 +128,7 @@ endif
 
 ifneq ($(filter $(rockchip_drivers), $(DRM_GPU_DRIVERS)),)
 LOCAL_C_INCLUDES += hardware/rockchip/librkvpu
-LOCAL_SRC_FILES += gralloc_drm_rockchip.c
+LOCAL_SRC_FILES += gralloc_drm_rockchip.cpp
 #RK_DRM_GRALLOC for rockchip drm gralloc
 #RK_DRM_GRALLOC_DEBUG for rockchip drm gralloc debug.
 MAJOR_VERSION := "RK_GRAPHICS_VER=commit-id:$(shell cd $(LOCAL_PATH) && git log  -1 --oneline | awk '{print $$1}')"
