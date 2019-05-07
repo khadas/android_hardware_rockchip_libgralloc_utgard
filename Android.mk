@@ -81,7 +81,7 @@ else
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libgralloc_drm
-ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 LOCAL_MODULE_TAGS := optional
@@ -127,7 +127,8 @@ LOCAL_SHARED_LIBRARIES += libdrm_nouveau
 endif
 
 ifneq ($(filter $(rockchip_drivers), $(DRM_GPU_DRIVERS)),)
-LOCAL_C_INCLUDES += hardware/rockchip/librkvpu
+LOCAL_C_INCLUDES += hardware/rockchip/librkvpu \
+                    system/core/liblog/include
 LOCAL_SRC_FILES += gralloc_drm_rockchip.cpp
 #RK_DRM_GRALLOC for rockchip drm gralloc
 #RK_DRM_GRALLOC_DEBUG for rockchip drm gralloc debug.
@@ -185,7 +186,8 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := \
 	external/libdrm \
-	external/libdrm/include/drm
+	external/libdrm/include/drm \
+        system/core/liblog/include
 
 LOCAL_HEADER_LIBRARIES += \
     libutils_headers \
@@ -211,7 +213,7 @@ LOCAL_MODULE := gralloc.rk3229
 else
 LOCAL_MODULE := gralloc.$(TARGET_BOARD_HARDWARE)
 endif
-ifeq (1,$(strip $(shell expr $(PLATFORM_VERSION) \>= 8.0)))
+ifeq (1,$(strip $(shell expr $(PLATFORM_SDK_VERSION) \>= 26)))
 LOCAL_PROPRIETARY_MODULE := true
 endif
 LOCAL_MODULE_TAGS := optional
