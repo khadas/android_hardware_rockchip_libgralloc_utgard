@@ -20,6 +20,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 # Android.mk for drm_gralloc
+ifeq ($(strip $(TARGET_BOARD_PLATFORM_GPU)), mali400)
 
 DRM_GPU_DRIVERS := $(strip $(filter-out swrast, $(BOARD_GPU_DRIVERS)))
 DRM_GPU_DRIVERS := rockchip
@@ -222,3 +223,5 @@ include $(BUILD_SHARED_LIBRARY)
 
 endif # DRM_GPU_DRIVERS=prebuilt
 endif # DRM_GPU_DRIVERS
+
+endif
