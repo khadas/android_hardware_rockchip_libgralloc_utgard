@@ -20,7 +20,8 @@
 # DEALINGS IN THE SOFTWARE.
 
 # Android.mk for drm_gralloc
-ifeq ($(strip $(TARGET_BOARD_PLATFORM_GPU)), mali400)
+#ifeq ($(strip $(TARGET_BOARD_PLATFORM_GPU)), mali400)
+ifneq (,$(filter mali400 mali450, $(TARGET_BOARD_PLATFORM_GPU)))
 
 DRM_GPU_DRIVERS := $(strip $(filter-out swrast, $(BOARD_GPU_DRIVERS)))
 DRM_GPU_DRIVERS := rockchip
