@@ -1215,7 +1215,6 @@ static int drm_init_version()
         property_get("vendor.ggralloc.version", value, "NULL");
         if(!strcmp(value,"NULL"))
         {
-                property_set("vendor.ggralloc.commit", acCommit);
                 ALOGD(RK_GRAPHICS_VER);
         }
 
