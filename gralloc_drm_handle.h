@@ -106,6 +106,7 @@ struct gralloc_drm_handle_t {
                 off_t    offset;
                 uint64_t padding4;
         };
+	// cpu_addr out of use
 	union
 	{
 		void   *cpu_addr;

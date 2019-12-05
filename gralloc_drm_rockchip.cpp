@@ -1050,10 +1050,6 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
         handle->format = format;
         handle->size = size;
         handle->offset = 0;
-        handle->cpu_addr = rockchip_bo_map(buf->bo);
-	if (!handle->cpu_addr) {
-		ALOGE("cpu_addr: failed to map bo\n");
-	}
 #else
         handle->stride = pitch;
 #endif
