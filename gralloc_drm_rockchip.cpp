@@ -930,13 +930,13 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
                flags |= ROCKCHIP_BO_CONTIG;
                ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "try to use Physically Continuous memory\n");
        }
-
+#if 0
 	if(usage & GRALLOC_USAGE_PROTECTED)
 	{
 		flags |= ROCKCHIP_BO_SECURE;
 		ALOGD_IF(RK_DRM_GRALLOC_DEBUG, "try to use secure memory\n");
 	}
-
+#endif
 	/*-------------------------------------------------------*/
     // 完成 alloc 或 import buffer.
 
