@@ -823,7 +823,6 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 	        || format == HAL_PIXEL_FORMAT_YCbCr_420_SP || format == HAL_PIXEL_FORMAT_YCbCr_420_P || format == HAL_PIXEL_FORMAT_YCbCr_422_I
 #endif
 		|| format == HAL_PIXEL_FORMAT_YCrCb_NV12 || format == HAL_PIXEL_FORMAT_YCrCb_NV12_10
-		|| format == HAL_PIXEL_FORMAT_YCrCb_NV12_VIDEO
 	   )
 	{
 		switch (format)
@@ -884,6 +883,18 @@ static struct gralloc_drm_bo_t *drm_gem_rockchip_alloc(
 	{
 		switch (format)
 		{
+#if PLATFORM_SDK_VERSION >= 26
+			case HAL_PIXEL_FORMAT_RGBA_FP16:
+				bpp = 8;
+				I("In order to run swiftshader-vulkan on Android-Q to pass CTS, this format is compatible. format:0x%x bpp=%d\n", format, bpp);
+				break;
+#endif
+#if PLATFORM_SDK_VERSION >= 26
+			case HAL_PIXEL_FORMAT_RGBA_1010102:
+				bpp = 4;
+				I("In order to run swiftshader-vulkan on Android-Q to pass CTS, this format is compatible. format:0x%x bpp=%d\n", format, bpp);
+				break;
+#endif
 			case HAL_PIXEL_FORMAT_RGBA_8888:
 			case HAL_PIXEL_FORMAT_RGBX_8888:
 			case HAL_PIXEL_FORMAT_BGRA_8888:
