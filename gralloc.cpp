@@ -508,7 +508,7 @@ static int drm_mod_open(const struct hw_module_t *mod,
 	return err;
 }
 
-#define BAD_VALUE 3
+#define BAD_VALUE -3
 
 static int drm_validate_buffer_size(const gralloc_module_t *mod, buffer_handle_t handle,
             uint32_t w, uint32_t h, int32_t format, int usage, int layer_count,
