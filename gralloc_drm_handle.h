@@ -38,6 +38,10 @@
 extern "C" {
 #endif
 
+#ifndef USE_HWC2
+#define USE_HWC2
+#endif
+
 #if 1 //RK_DRM_GRALLOC
 #define NUM_FB_BUFFERS 3
 #define GRALLOC_ARM_UMP_MODULE 0
