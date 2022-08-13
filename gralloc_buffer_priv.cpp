@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include "gralloc_drm_handle.h"
 #include "gralloc_buffer_priv.h"
+#include "hardware/gralloc_rockchip.h"
 
 #if 0
 /*

@@ -34,6 +34,8 @@ extern "C" {
 #include <utils/KeyedVector.h>
 #include <utils/Mutex.h>
 
+#include "hardware/gralloc_rockchip.h"
+
 /*---------------------------------------------------------------------------*/
 
 #define RK_CTS_WORKROUND	(1)

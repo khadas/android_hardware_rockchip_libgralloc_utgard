@@ -99,7 +99,8 @@ LOCAL_HEADER_LIBRARIES += \
 	libhardware_headers \
     liblog_headers \
 	libutils_headers \
-	libcutils_headers
+	libcutils_headers \
+	libhardware_rockchip_headers
 
 LOCAL_SHARED_LIBRARIES := \
 	libdrm \
@@ -181,7 +182,6 @@ LOCAL_SHARED_LIBRARIES += libdl
 endif # DRM_USES_PIPE
 include $(BUILD_SHARED_LIBRARY)
 
-
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := \
 	gralloc.cpp
@@ -189,13 +189,15 @@ LOCAL_SRC_FILES := \
 LOCAL_C_INCLUDES := \
 	external/libdrm \
 	external/libdrm/include/drm \
-        system/core/liblog/include
+        system/core/liblog/include	\
+
 
 LOCAL_HEADER_LIBRARIES += \
     libutils_headers \
 	liblog_headers \
 	libhardware_headers \
-	libcutils_headers
+	libcutils_headers	\
+	libhardware_rockchip_headers	\
 
 LOCAL_SHARED_LIBRARIES := \
 	libgralloc_drm \

@@ -509,10 +509,10 @@ static int drm_mod_open(const struct hw_module_t *mod,
 }
 
 #define BAD_VALUE -3
-
-static int drm_validate_buffer_size(const gralloc_module_t *mod, buffer_handle_t handle,
-            uint32_t w, uint32_t h, int32_t format, int usage, int layer_count,
-            uint32_t stride)
+static int drm_validate_buffer_size(
+	struct gralloc_module_t const* device, buffer_handle_t handle,
+	uint32_t w, uint32_t h, int32_t format, int usage,
+	uint32_t stride)
 {
     int bpp;
 
@@ -554,13 +554,7 @@ static int drm_validate_buffer_size(const gralloc_module_t *mod, buffer_handle_t
         }
     }
 
-    if ( layer_count > 1 )
-    {
-        ALOGE("validateBufferSize failed, layer count is invaild");
-        return BAD_VALUE;
-    }
-
-    UNUSED(mod);
+    UNUSED(device);
     UNUSED(usage);
 
     return 0;

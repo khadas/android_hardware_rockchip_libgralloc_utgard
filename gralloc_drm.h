@@ -32,6 +32,9 @@
 #include <hardware/gralloc.h>
 #include <system/graphics.h>
 
+#include "hardware/hardware_rockchip.h"
+#include "hardware/gralloc_rockchip.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

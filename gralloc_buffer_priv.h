@@ -25,6 +25,8 @@
 #include <string.h>
 #include <sys/mman.h>
 #include "gralloc_drm_handle.h"
+#include "hardware/gralloc_rockchip.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
