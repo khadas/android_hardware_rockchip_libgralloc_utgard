@@ -16,14 +16,20 @@
  * limitations under the License.
  */
 
-#ifndef GRALLOC_HELPER_H_
-#define GRALLOC_HELPER_H_
+#include <hardware/hardware.h>
 
-#include <sys/mman.h>
+#ifndef AWAR
+#define AWAR(fmt, args...) __android_log_print(ANDROID_LOG_WARN, "[Gralloc-Warning]", "%s:%d " fmt,__func__,__LINE__,##args)
+#endif
+#ifndef AINF
+#define AINF(fmt, args...) __android_log_print(ANDROID_LOG_INFO, "[Gralloc]", fmt,##args)
+#endif
+#ifndef AERR
+#define AERR(fmt, args...) __android_log_print(ANDROID_LOG_ERROR, "[Gralloc-ERROR]", "%s:%d " fmt,__func__,__LINE__,##args)
+#endif
+#ifndef AERR_IF
+#define AERR_IF( eq, fmt, args...) if ( (eq) ) AERR( fmt, args )
+#endif
 
-inline size_t round_up_to_page_size(size_t x)
-{
-	return (x + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
-}
-
-#endif /* GRALLOC_HELPER_H_ */
+// Create an alloc device
+int alloc_device_open(hw_module_t const *module, const char *name, hw_device_t **device);

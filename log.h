@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2012 Intel Corporation. All rights reserved.
+ * Copyright (C) 2019 ARM Limited. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *		http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,26 +14,17 @@
  * limitations under the License.
  */
 
-/*
- * Android graphics.h defines the formats and leaves 0x100 - 0x1FF
- * range available for HAL implementation specific formats.
- */
+#pragma once
 
-#ifndef GRALLOC_DRM_FORMATS_H
-#define GRALLOC_DRM_FORMATS_H
-
-#ifdef __cplusplus
-extern "C" {
+#ifndef LOG_TAG
+#define LOG_TAG "mali_gralloc"
 #endif
 
-enum {
+#include <log/log.h>
 
-	HAL_PIXEL_FORMAT_DRM_NV12 = 0x102,
-};
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+/* Delegate logging to Android */
+#define MALI_GRALLOC_LOGI(...) ALOGI(__VA_ARGS__)
+#define MALI_GRALLOC_LOGV(...) ALOGV(__VA_ARGS__)
+#define MALI_GRALLOC_LOGW(...) ALOGW(__VA_ARGS__)
+#define MALI_GRALLOC_LOGE(...) ALOGE(__VA_ARGS__)
 

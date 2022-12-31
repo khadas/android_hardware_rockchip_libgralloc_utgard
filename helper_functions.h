@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 ARM Limited. All rights reserved.
+ * Copyright (C) 2010-2020 ARM Limited. All rights reserved.
  *
  * Copyright (C) 2008 The Android Open Source Project
  *
@@ -16,14 +16,21 @@
  * limitations under the License.
  */
 
-#ifndef GRALLOC_HELPER_H_
-#define GRALLOC_HELPER_H_
+#pragma once
 
+#include <unistd.h>
 #include <sys/mman.h>
+#include <sys/user.h>
 
-inline size_t round_up_to_page_size(size_t x)
+#include "log.h"
+
+#define GRALLOC_ALIGN(value, base) ((((value) + (base) -1) / (base)) * (base))
+
+#define GRALLOC_MAX(a, b) (((a)>(b))?(a):(b))
+
+#define GRALLOC_UNUSED(x) ((void)x)
+
+static inline size_t round_up_to_page_size(size_t x)
 {
 	return (x + (PAGE_SIZE - 1)) & ~(PAGE_SIZE - 1);
 }
-
-#endif /* GRALLOC_HELPER_H_ */
