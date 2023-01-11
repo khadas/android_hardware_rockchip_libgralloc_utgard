@@ -306,12 +306,29 @@ static bool is_rk_ext_hal_format(const uint64_t hal_format)
 	}
 }
 
+/*
+ * Select pixel format (base + modifier) for allocation with RK manner.
+ *
+ * @param req_format       [in]   Format (base + optional modifiers) requested by client.
+ * @param usage            [in]   Buffer usage.
+ * @param buffer_size      [in]   Buffer resolution (w x h, in pixels).
+ *
+ * @return alloc_format, format to be used in allocation;
+ *         MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED, where no suitable
+ *         format could be found.
+ */
 static uint64_t rk_gralloc_select_format(const uint64_t req_format,
 					 const uint64_t usage,
 					 const int buffer_size) // Buffer resolution (w x h, in pixels).
 {
 	uint64_t internal_format = req_format;
 	MALI_IGNORE(buffer_size);
+
+	if ( HAL_PIXEL_FORMAT_RGBA_FP16 == req_format )
+	{
+		I("HAL_PIXEL_FORMAT_RGBA_FP16 is not supported");
+		return MALI_GRALLOC_FORMAT_INTERNAL_UNDEFINED;
+	}
 
 	/*-------------------------------------------------------*/
 	/* rk 定义的 从 'req_format' 到 'internal_format' 的映射. */
