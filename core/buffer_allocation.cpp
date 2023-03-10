@@ -1125,30 +1125,6 @@ int mali_gralloc_derive_format_and_size(buffer_descriptor_t *descriptor)
 		/* 若 base_format "是" 被 rk_video 使用的格式, 且 rk client 要求指定 stride, 则 ... */
 		if ( is_base_format_used_by_rk_video(base_format) && is_stride_specified )
 		{
-			uint8_t bpp = 0;	// bits_per_pixel of plane_0
-			const int pixel_stride_asked_by_rk_video = bufDescriptor->width;
-			int pixel_stride_calculated_by_arm_gralloc = 0;
-
-			/* 若当前 是 AFBC 格式, 则 ... */
-			if ( bufDescriptor->alloc_format & MALI_GRALLOC_INTFMT_AFBC_BASIC )
-			{
-				bpp = formats[format_idx].bpp_afbc[0];
-			}
-			else
-			{
-				bpp = formats[format_idx].bpp[0];
-			}
-
-			pixel_stride_calculated_by_arm_gralloc = bufDescriptor->plane_info[0].byte_stride * 8 / bpp;
-
-			if ( pixel_stride_asked_by_rk_video != pixel_stride_calculated_by_arm_gralloc )
-			{
-				W("pixel_stride_asked_by_rk_video(%d) and pixel_stride_calculated_by_arm_gralloc(%d) are different.",
-						  pixel_stride_asked_by_rk_video,
-						  pixel_stride_calculated_by_arm_gralloc);
-
-			}
-
 			/* 对某些 格式的 rk_video_buffer 的 size 做必要调整. */
 			adjust_rk_video_buffer_size(bufDescriptor, &(formats[format_idx] ) );
 		}
