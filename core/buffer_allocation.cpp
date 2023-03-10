@@ -835,15 +835,13 @@ static void calc_allocation_size(const int width,
 		MALI_GRALLOC_LOGV("Byte stride: %d", plane_info[plane].byte_stride);
 
 		/*
-		 * Pixel stride (CPU usage only).
+		 * Pixel stride
 		 * Not used in size calculation but exposed to client.
 		 */
 		if (plane == 0)
 		{
 			*pixel_stride = 0;
-			const bool is_cpu_accessible =
-			    !alloc_type.is_afbc() && !alloc_type.is_afrc() && !alloc_type.is_block_linear() && has_cpu_usage;
-			if (is_cpu_accessible)
+
 			{
 				assert((plane_info[plane].byte_stride * 8) % format.bpp[plane] == 0);
 				*pixel_stride = (plane_info[plane].byte_stride * 8) / format.bpp[plane];
