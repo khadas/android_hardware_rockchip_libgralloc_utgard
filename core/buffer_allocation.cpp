@@ -847,6 +847,12 @@ static void calc_allocation_size(const int width,
 			{
 				assert((plane_info[plane].byte_stride * 8) % format.bpp[plane] == 0);
 				*pixel_stride = (plane_info[plane].byte_stride * 8) / format.bpp[plane];
+
+				if ( is_stride_specified
+					&& format.id == MALI_GRALLOC_FORMAT_INTERNAL_NV15 )
+				{
+					*pixel_stride = plane_info[0].byte_stride;
+				}
 			}
 
 			MALI_GRALLOC_LOGV("Pixel stride: %d", *pixel_stride);
