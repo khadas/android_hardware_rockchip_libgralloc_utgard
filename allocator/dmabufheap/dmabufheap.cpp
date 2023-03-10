@@ -199,28 +199,6 @@ static int call_dma_buf_sync_ioctl(int fd, uint64_t operation, bool read, bool w
 	return 0;
 }
 
-static int calc_pixel_stride(const buffer_descriptor_t *bufDescriptor)
-{
-	int32_t format_idx = get_format_index(bufDescriptor->alloc_format & MALI_GRALLOC_INTFMT_FMT_MASK);
-	const format_info_t *format = &(formats[format_idx] );
-	uint8_t bpp = 0;        // bits_per_pixel of plane_0
-
-	V("cz: bufDescriptor->alloc_format: 0x%" PRIx64 ", bufDescriptor->alloc_format & MALI_GRALLOC_INTFMT_AFBC_BASIC: 0x%" PRIx64,
-		bufDescriptor->alloc_format,
-		(uint64_t)(bufDescriptor->alloc_format & MALI_GRALLOC_INTFMT_AFBC_BASIC) );
-	/* 若当前 是 AFBC 格式, 则 ... */
-	if ( bufDescriptor->alloc_format & MALI_GRALLOC_INTFMT_AFBC_BASIC )
-	{
-		bpp = format->bpp_afbc[0];
-	}
-	else
-	{
-		bpp = format->bpp[0];
-	}
-
-	return bufDescriptor->plane_info[0].byte_stride * 8 / bpp;
-}
-
 /*---------------------------------------------------------------------------*/
 
 int allocator_sync_start(const private_handle_t *handle, bool read, bool write)
@@ -310,7 +288,8 @@ int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t *
 	    descriptor->producer_usage, shared_fd, descriptor->hal_format, descriptor->alloc_format,
 	    descriptor->width, descriptor->height, descriptor->size, descriptor->layer_count,
 	    descriptor->plane_info,
-	    descriptor->plane_info[0].byte_stride);
+	    descriptor->plane_info[0].byte_stride,
+	    descriptor->pixel_stride);
 	if (nullptr == handle)
 	{
 		MALI_GRALLOC_LOGE("Private handle could not be created for descriptor");
@@ -322,7 +301,6 @@ int allocator_allocate(const buffer_descriptor_t *descriptor, private_handle_t *
 		/* Ownership transferred to handle. */
 		shared_fd = -1;
 	}
-	handle->pixel_stride = calc_pixel_stride(descriptor);
 
 	if (usage & GRALLOC_USAGE_PROTECTED)
 	{

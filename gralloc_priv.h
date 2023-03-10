@@ -421,12 +421,14 @@ struct private_handle_t
 			 int _backing_store_size,
 	                 uint64_t _layer_count,
 			 const plane_info_t *_plane_info,
-			 int _stride)
+			 int _stride, // 'byte_stride'
+			 int _pixel_stride)
 	    : share_fd(_shared_fd)
 	    , size(_size)
 	    , width(_width)
 	    , height(_height)
 	    , stride(_stride)
+	    , pixel_stride(_pixel_stride)
 	    , flags(_flags)
 	    , req_format(_req_format)
 	    , producer_usage(_producer_usage)
@@ -490,7 +492,7 @@ static inline private_handle_t *make_private_handle(int flags, int size, uint64_
                                                     uint64_t producer_usage, int shared_fd, int required_format,
                                                     uint64_t allocated_format, int width, int height,
                                                     int backing_store_size, uint64_t layer_count,
-                                                    const plane_info_t *plane_info, int byte_stride)
+                                                    const plane_info_t *plane_info, int byte_stride, int pixel_stride)
 {
 	void *mem = native_handle_create(GRALLOC_ARM_NUM_FDS, NUM_INTS_IN_PRIVATE_HANDLE);
 	if (mem == nullptr)
@@ -512,7 +514,8 @@ static inline private_handle_t *make_private_handle(int flags, int size, uint64_
 			     backing_store_size,
 			     layer_count,
 			     plane_info,
-			     byte_stride);
+			     byte_stride,
+			     pixel_stride);
 }
 #endif
 
