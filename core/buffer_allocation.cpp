@@ -418,8 +418,8 @@ static int max(int a, int b, int c, int d)
  */
 static void get_pixel_w_h(uint32_t * const width,
                           uint32_t * const height,
-                          const format_info_t format,
-                          const alloc_type_t alloc_type,
+                          const format_info_t& format,
+                          const alloc_type_t& alloc_type,
                           const uint8_t plane,
                           bool has_cpu_usage)
 {
@@ -512,22 +512,20 @@ static void get_pixel_w_h(uint32_t * const width,
 
 static uint32_t gcd(uint32_t a, uint32_t b)
 {
-	uint32_t r, t;
-
 	if (a == b)
 	{
 		return a;
 	}
 	else if (a < b)
 	{
-		t = a;
+		uint32_t t = a;
 		a = b;
 		b = t;
 	}
 
 	while (b != 0)
 	{
-		r = a % b;
+		uint32_t r = a % b;
 		a = b;
 		b = r;
 	}
@@ -578,7 +576,7 @@ static void update_yv12_stride(int8_t plane,
 		 */
 		*byte_stride = luma_stride / 2;
 		assert(*byte_stride == GRALLOC_ALIGN(*byte_stride, stride_align));
-		assert(*byte_stride & 15 == 0);
+		assert( (*byte_stride & 15) == 0);
 	}
 }
 
@@ -611,8 +609,8 @@ static void update_yv12_stride(int8_t plane,
  */
 static void calc_allocation_size(const int width,
                                  const int height,
-                                 const alloc_type_t alloc_type,
-                                 const format_info_t format,
+                                 const alloc_type_t& alloc_type,
+                                 const format_info_t& format,
                                  const bool has_cpu_usage,
                                  const bool has_hw_usage,
 				 const bool is_stride_specified,
@@ -731,24 +729,24 @@ static void calc_allocation_size(const int width,
 			if ( usage_flag_for_stride_alignment != 0
 				&& format.id == MALI_GRALLOC_FORMAT_INTERNAL_NV12 ) // 仅处理 NV12
 			{
-				uint32_t pixel_stride = 0;
+				uint32_t aligned_pixel_stride = 0;
 
 				switch ( usage_flag_for_stride_alignment )
 				{
 				case RK_GRALLOC_USAGE_STRIDE_ALIGN_16:
-					pixel_stride = GRALLOC_ALIGN(width, 16);
+					aligned_pixel_stride = GRALLOC_ALIGN(width, 16);
 					break;
 
 				case RK_GRALLOC_USAGE_STRIDE_ALIGN_64:
-					pixel_stride = GRALLOC_ALIGN(width, 64);
+					aligned_pixel_stride = GRALLOC_ALIGN(width, 64);
 					break;
 
 				case RK_GRALLOC_USAGE_STRIDE_ALIGN_128:
-					pixel_stride = GRALLOC_ALIGN(width, 128);
+					aligned_pixel_stride = GRALLOC_ALIGN(width, 128);
 					break;
 
 				case RK_GRALLOC_USAGE_STRIDE_ALIGN_256_ODD_TIMES:
-					pixel_stride = ( (width + 255) & (~255) ) | (256);
+					aligned_pixel_stride = ( (width + 255) & (~255) ) | (256);
 					break;
 
 				default:
@@ -759,11 +757,11 @@ static void calc_allocation_size(const int width,
 
 				if ( 0 == plane )
 				{
-					plane_info[plane].byte_stride = pixel_stride * format.bpp[plane] / 8;
+					plane_info[plane].byte_stride = aligned_pixel_stride * format.bpp[plane] / 8;
 				}
 				else // for sub-sample (sub-sampled) planes.
 				{
-					plane_info[plane].byte_stride = pixel_stride * format.bpp[plane] / 8 / format.hsub;
+					plane_info[plane].byte_stride = aligned_pixel_stride * format.bpp[plane] / 8 / format.hsub;
 				}
 			}
 
@@ -947,7 +945,7 @@ static void calc_allocation_size(const int width,
  * Return true if valid, false otherwise.
  */
 static bool validate_format(const format_info_t * const format,
-                            const alloc_type_t alloc_type,
+                            const alloc_type_t& alloc_type,
                             const buffer_descriptor_t * const bufDescriptor)
 {
 	if (alloc_type.is_afbc())

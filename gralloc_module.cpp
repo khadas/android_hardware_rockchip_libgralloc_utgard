@@ -52,7 +52,7 @@ static void init_version_info(void)
 	ALOGI(RK_GRAPHICS_VER);
 
 	/* RK_GRAPHICS_VER=commit-id:067e5d0: only keep string after '=' */
-	sscanf(RK_GRAPHICS_VER, "%*[^=]=%s", acCommit);
+	sscanf(RK_GRAPHICS_VER, "%*[^=]=%127s", acCommit);
 
 	property_set("vendor.ggralloc.commit", acCommit);
 }
@@ -82,9 +82,9 @@ static int gralloc_register_buffer(gralloc_module_t const *module, buffer_handle
 	}
 
 	// if this handle was created in this process, then we keep it as is.
-	private_handle_t *hnd = (private_handle_t *)handle;
+	private_handle_t *hnd = static_cast<private_handle_t *>(const_cast<native_handle_t *>(handle) );
 
-	int retval = -EINVAL;
+	int retval;
 
 	pthread_mutex_lock(&s_map_lock);
 
@@ -94,7 +94,7 @@ static int gralloc_register_buffer(gralloc_module_t const *module, buffer_handle
 		unsigned char *mappedAddress;
 		size_t size = hnd->size;
 
-		mappedAddress = (unsigned char *)mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, hnd->share_fd, 0);
+		mappedAddress = static_cast<unsigned char *>(mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, hnd->share_fd, 0) );
 
 		if (MAP_FAILED == mappedAddress)
 		{
@@ -118,7 +118,7 @@ cleanup:
 static void unmap_buffer(private_handle_t *hnd)
 {
 	{
-		void *base = (void *)hnd->base;
+		void *base = static_cast<void *>(hnd->base);
 		size_t size = hnd->size;
 
 		if (munmap(base, size) < 0)
@@ -142,7 +142,7 @@ static int gralloc_unregister_buffer(gralloc_module_t const *module, buffer_hand
 		return -EINVAL;
 	}
 
-	private_handle_t *hnd = (private_handle_t *)handle;
+	private_handle_t *hnd = static_cast<private_handle_t *>(const_cast<native_handle_t *>(handle) );
 
 	AERR_IF(hnd->lockState & private_handle_t::LOCK_STATE_READ_MASK, "[unregister] handle %p still locked (state=%08x)", hnd, hnd->lockState);
 
@@ -250,7 +250,7 @@ static int gralloc_lock(gralloc_module_t const *module, buffer_handle_t handle, 
 		return -EINVAL;
 	}
 
-	private_handle_t *hnd = (private_handle_t *)handle;
+	private_handle_t *hnd = static_cast<private_handle_t *>(const_cast<native_handle_t *>(handle) );
 
 	pthread_mutex_lock(&s_map_lock);
 
@@ -271,7 +271,7 @@ static int gralloc_lock(gralloc_module_t const *module, buffer_handle_t handle, 
 
 	if (usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK))
 	{
-		*vaddr = (void *)hnd->base;
+		*vaddr = static_cast<void *>(hnd->base);
 		buffer_sync(hnd,
 			    get_tx_direction(usage)); // direction
 	}
@@ -290,15 +290,13 @@ static int gralloc_lock_ycbcr(gralloc_module_t const* module,
 			      int l, int t, int w, int h,
 			      android_ycbcr *ycbcr)
 {
-	char *vaddr;
-
 	if (private_handle_t::validate(handle) < 0)
 	{
 		AERR("Locking invalid buffer 0x%p, returning error", handle);
 		return -EINVAL;
 	}
 
-	private_handle_t *hnd = (private_handle_t *)handle;
+	private_handle_t *hnd = static_cast<private_handle_t *>(const_cast<native_handle_t *>(handle) );
 
 	/*-------------------------------------------------------*/
 
@@ -321,7 +319,7 @@ static int gralloc_lock_ycbcr(gralloc_module_t const* module,
 
 	if (usage & (GRALLOC_USAGE_SW_READ_MASK | GRALLOC_USAGE_SW_WRITE_MASK))
 	{
-		vaddr = (char *)(hnd->base);
+		char *vaddr = static_cast<char *>((hnd->base) );
 		buffer_sync(hnd,
 			    get_tx_direction(usage)); // direction
 
@@ -333,9 +331,9 @@ static int gralloc_lock_ycbcr(gralloc_module_t const* module,
 		switch (hnd->format) {
 			case HAL_PIXEL_FORMAT_YCrCb_420_SP: // NV21
 				ystride = hnd->stride;
-				ycbcr->y  = (void*)vaddr;
-				ycbcr->cr = (void*)(vaddr + ystride * hnd->height); // 'cr' : V
-				ycbcr->cb = (void*)(vaddr + ystride * hnd->height + 1); // 'cb : U
+				ycbcr->y  = static_cast<void*>(vaddr);
+				ycbcr->cr = static_cast<void*>(vaddr + ystride * hnd->height); // 'cr' : V
+				ycbcr->cb = static_cast<void*>(vaddr + ystride * hnd->height + 1); // 'cb : U
 				ycbcr->ystride = ystride;
 				ycbcr->cstride = ystride;
 				ycbcr->chroma_step = 2;
@@ -343,9 +341,9 @@ static int gralloc_lock_ycbcr(gralloc_module_t const* module,
 				break;
 			case HAL_PIXEL_FORMAT_YCrCb_NV12:
 				ystride = hnd->stride;
-				ycbcr->y  = (void*)vaddr;
-				ycbcr->cr = (void*)(vaddr + ystride *  hnd->height + 1);
-				ycbcr->cb = (void*)(vaddr + ystride *  hnd->height);
+				ycbcr->y  = static_cast<void*>(vaddr);
+				ycbcr->cr = static_cast<void*>(vaddr + ystride *  hnd->height + 1);
+				ycbcr->cb = static_cast<void*>(vaddr + ystride *  hnd->height);
 				ycbcr->ystride = ystride;
 				ycbcr->cstride = ystride;
 				ycbcr->chroma_step = 2;
@@ -355,17 +353,17 @@ static int gralloc_lock_ycbcr(gralloc_module_t const* module,
 				ystride = hnd->stride;
 				ycbcr->ystride = ystride;
 				ycbcr->cstride = (ystride/2 + 15) & ~15;
-				ycbcr->y  = (void*)vaddr;
-				ycbcr->cr = (void*)(vaddr + ystride * hnd->height);
-				ycbcr->cb = (void*)(vaddr + ystride * hnd->height + ycbcr->cstride * hnd->height/2);
+				ycbcr->y  = static_cast<void*>(vaddr);
+				ycbcr->cr = static_cast<void*>(vaddr + ystride * hnd->height);
+				ycbcr->cb = static_cast<void*>(vaddr + ystride * hnd->height + ycbcr->cstride * hnd->height/2);
 				ycbcr->chroma_step = 1;
 				memset(ycbcr->reserved, 0, sizeof(ycbcr->reserved));
 				break;
 			case HAL_PIXEL_FORMAT_YCbCr_422_SP:
 				ystride = hnd->stride;
-				ycbcr->y  = (void*)vaddr;
-				ycbcr->cb = (void*)(vaddr + ystride * hnd->height);
-				ycbcr->cr = (void*)(vaddr + ystride * hnd->height + 1);
+				ycbcr->y  = static_cast<void*>(vaddr);
+				ycbcr->cb = static_cast<void*>(vaddr + ystride * hnd->height);
+				ycbcr->cr = static_cast<void*>(vaddr + ystride * hnd->height + 1);
 				ycbcr->ystride = ystride;
 				ycbcr->cstride = ystride;
 				ycbcr->chroma_step = 2;
@@ -397,7 +395,7 @@ static int gralloc_unlock(gralloc_module_t const *module, buffer_handle_t handle
 		return -EINVAL;
 	}
 
-	private_handle_t *hnd = (private_handle_t *)handle;
+	private_handle_t *hnd = static_cast<private_handle_t *>(const_cast<native_handle_t *>(handle) );
 
 	/*-------------------------------------------------------*/
 	pthread_mutex_lock(&s_map_lock);
@@ -897,7 +895,7 @@ int lock_rkvdec_scaling_metadata(buffer_handle_t _handle,
 	{
 		return ret;
 	}
-	*metadata = (metadata_for_rkvdec_scaling_t*)(handle->rsm_base);
+	*metadata = static_cast<metadata_for_rkvdec_scaling_t*>(handle->rsm_base);
 
         return ret;
 }
@@ -926,7 +924,6 @@ static int set_offset_of_dynamic_hdr_metadata(buffer_handle_t _handle, int64_t o
 {
 	int ret = 0;
 	struct private_handle_t *handle = private_handle_t::dynamicCast(_handle);
-	struct rk_ashmem_t *rk_ashmem;
 
 	if ( NULL == handle )
 	{
@@ -942,7 +939,7 @@ static int set_offset_of_dynamic_hdr_metadata(buffer_handle_t _handle, int64_t o
 	{
 		if( handle->ashmem_base != MAP_FAILED )
 		{
-			rk_ashmem = (struct rk_ashmem_t*)(handle->ashmem_base);
+			struct rk_ashmem_t *rk_ashmem = static_cast<struct rk_ashmem_t*>(handle->ashmem_base);
 			D("rk_ashmem: %p, "
 					"&(rk_ashmem->offset_of_dynamic_hdr_metadata): %p, "
 					"sizeof(struct rk_ashmem_t): %zd",
@@ -981,7 +978,7 @@ static int get_offset_of_dynamic_hdr_metadata(buffer_handle_t _handle, int64_t *
 	{
 		if( handle->ashmem_base != MAP_FAILED )
 		{
-			rk_ashmem = (struct rk_ashmem_t*)(handle->ashmem_base);
+			rk_ashmem = static_cast<struct rk_ashmem_t*>(handle->ashmem_base);
 			*offset = rk_ashmem->offset_of_dynamic_hdr_metadata;
 		}
 
@@ -1082,7 +1079,7 @@ static int gralloc_perform(const struct gralloc_module_t *mod, int op, ...)
 
                         if (attrs != NULL)
                         {
-                                err = get_attributes(hnd, (void*)attrs);
+                                err = get_attributes(hnd, static_cast<void*>(attrs) );
                         }
                         else
                         {

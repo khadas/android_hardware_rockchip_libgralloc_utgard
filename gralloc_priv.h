@@ -177,10 +177,10 @@ struct private_handle_t
 
 	enum
 	{
-		LOCK_STATE_WRITE     =   1 << 31,
-		LOCK_STATE_MAPPED    =   1 << 30,
-		LOCK_STATE_UNREGISTERED  =   1 << 29,
-		LOCK_STATE_READ_MASK =   0x3FFFFFFF
+		LOCK_STATE_WRITE     =   1 << 30,
+		LOCK_STATE_MAPPED    =   1 << 29,
+		LOCK_STATE_UNREGISTERED  =   1 << 28,
+		LOCK_STATE_READ_MASK =   0x1FFFFFFF
 	};
 #endif
 
@@ -452,7 +452,7 @@ struct private_handle_t
 
 	static int validate(const native_handle *h)
 	{
-		const private_handle_t *hnd = (const private_handle_t *)h;
+		private_handle_t *hnd = static_cast<private_handle_t *>(const_cast<native_handle_t *>(h) );
 
 		if (!h || h->version != sizeof(native_handle) || h->numFds != sNumFds ||
 		        h->numInts != (sizeof(private_handle_t) - sizeof(native_handle)) / sizeof(int) - sNumFds ||

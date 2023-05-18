@@ -45,56 +45,6 @@
 
 #define GRALLOC_ALIGN( value, base ) (((value) + ((base) - 1)) & ~((base) - 1))
 
-#if GRALLOC_SIMULATE_FAILURES
-#include <cutils/properties.h>
-
-/* system property keys for controlling simulated UMP allocation failures */
-#define PROP_MALI_TEST_GRALLOC_FAIL_FIRST     "mali.test.gralloc.fail_first"
-#define PROP_MALI_TEST_GRALLOC_FAIL_INTERVAL  "mali.test.gralloc.fail_interval"
-
-static int __ump_alloc_should_fail()
-{
-
-	static unsigned int call_count  = 0;
-	unsigned int        first_fail  = 0;
-	int                 fail_period = 0;
-	int                 fail        = 0;
-
-	++call_count;
-
-	/* read the system properties that control failure simulation */
-	{
-		char prop_value[PROPERTY_VALUE_MAX];
-
-		if (property_get(PROP_MALI_TEST_GRALLOC_FAIL_FIRST, prop_value, "0") > 0)
-		{
-			sscanf(prop_value, "%11u", &first_fail);
-		}
-
-		if (property_get(PROP_MALI_TEST_GRALLOC_FAIL_INTERVAL, prop_value, "0") > 0)
-		{
-			sscanf(prop_value, "%11u", &fail_period);
-		}
-	}
-
-	/* failure simulation is enabled by setting the first_fail property to non-zero */
-	if (first_fail > 0)
-	{
-		LOGI("iteration %u (fail=%u, period=%u)\n", call_count, first_fail, fail_period);
-
-		fail = (call_count == first_fail) ||
-		       (call_count > first_fail && fail_period > 0 && 0 == (call_count - first_fail) % fail_period);
-
-		if (fail)
-		{
-			AERR("failed ump_ref_drv_allocate on iteration #%d\n", call_count);
-		}
-	}
-
-	return fail;
-}
-#endif
-
 static void get_yuv_info(int usage, mali_gralloc_yuv_info *yuv_info)
 {
 	int private_usage = usage & (GRALLOC_USAGE_PRIVATE_0 | GRALLOC_USAGE_PRIVATE_1);
@@ -201,7 +151,7 @@ static int alloc_device_alloc(alloc_device_t *dev,
 		return -1;
 	}
 
-	struct rk_ashmem_t* rk_ashmem = (struct rk_ashmem_t*)hnd->ashmem_base;
+	struct rk_ashmem_t* rk_ashmem = static_cast<struct rk_ashmem_t*>(hnd->ashmem_base);
 	rk_ashmem->alreadyStereo = 0;
 	rk_ashmem->displayStereo = 0;
 	strcpy(rk_ashmem->LayerName, "");
@@ -224,8 +174,8 @@ static int alloc_device_alloc(alloc_device_t *dev,
 		return -1;
 	}
 
-	metadata_for_rkvdec_scaling_t* metadata = (metadata_for_rkvdec_scaling_t*)hnd->rsm_base;
-	memset((void *)metadata, 0, sizeof(*metadata));
+	metadata_for_rkvdec_scaling_t* metadata = static_cast<metadata_for_rkvdec_scaling_t*>(hnd->rsm_base);
+	memset(static_cast<void *>(metadata), 0, sizeof(*metadata));
 
 	munmap(hnd->rsm_base, hnd->rsm_size);
 	hnd->rsm_base = MAP_FAILED;
@@ -441,13 +391,13 @@ static int alloc_device_free(alloc_device_t *dev, buffer_handle_t handle)
 		return -EINVAL;
 	}
 
-	private_handle_t const *hnd = reinterpret_cast<private_handle_t const *>(handle);
+	private_handle_t *hnd = static_cast<private_handle_t *>(const_cast<native_handle_t *>(handle) );
 
 	{
 		/* Buffer might be unregistered so we need to check for invalid ump handle*/
 		if (0 != hnd->base)
 		{
-			if (0 != munmap((void *)hnd->base, hnd->size))
+			if (0 != munmap(static_cast<void *>(hnd->base), hnd->size))
 			{
 				AERR("Failed to munmap handle 0x%p", hnd);
 			}
@@ -460,7 +410,7 @@ static int alloc_device_free(alloc_device_t *dev, buffer_handle_t handle)
 		close(hnd->rsm_fd);
 		// 目前设计中, 预期 'hnd->rsm_base' 是 MAP_FAILED.
 
-		memset((void *)hnd, 0, sizeof(*hnd));
+		memset(static_cast<void *>(hnd), 0, sizeof(*hnd));
 	}
 
 	delete hnd;
